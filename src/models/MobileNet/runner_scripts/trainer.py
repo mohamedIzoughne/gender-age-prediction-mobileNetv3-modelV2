@@ -96,5 +96,6 @@ def load_model(path: str = "model_checkpoint.pth") -> AgeGenderClassifier:
 
 
 if __name__ == "__main__":
-    config = load_config("config/model/swept-sweep-34_improved_DYNAMIC_AUG.yaml")
+    config_path = os.path.join(project_root, "config/model/swept-sweep-34_improved_DYNAMIC_AUG.yaml")
+    config = load_config(config_path)
     train(config, serialize_final=True)
