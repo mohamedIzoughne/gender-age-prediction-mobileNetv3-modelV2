@@ -82,6 +82,11 @@ class AgeGenderDataset(Dataset):
         self.transform = transform
         self.augmented_indices: List[Tuple[int, bool]] = []
         self.use_dynamic_augmentation = use_dynamic_augmentation
+        
+        if self.use_dynamic_augmentation:
+            augmentation_configs = get_dynamic_augmentations()
+            transforms_list = [transform for _, transform in augmentation_configs]
+            self.dynamic_augment_transform = transforms.Compose(transforms_list)
 
         self.image_files = [f for f in os.listdir(root_dir) if f.endswith(".jpg")]
         self.valid_images: List[str] = []
@@ -181,10 +186,7 @@ class AgeGenderDataset(Dataset):
 
     def apply_dynamic_augmentation(self, img: Image.Image) -> torch.Tensor:
         """Apply dynamic augmentation to an image."""
-        augmentation_configs = get_dynamic_augmentations()
-        transforms_list = [transform for _, transform in augmentation_configs]
-        augment_transform = transforms.Compose(transforms_list)
-        return augment_transform(img)
+        return self.dynamic_augment_transform(img)
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int, int, int, str]:
         """Get a sample from the dataset."""
