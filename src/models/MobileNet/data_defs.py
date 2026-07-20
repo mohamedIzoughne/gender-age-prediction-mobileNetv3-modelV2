@@ -184,11 +184,7 @@ class AgeGenderDataset(Dataset):
     def __len__(self) -> int:
         return len(self.valid_images) + len(self.augmented_indices)
 
-    def apply_dynamic_augmentation(self, img: Image.Image) -> torch.Tensor:
-        """Apply dynamic augmentation to an image."""
-        return self.dynamic_augment_transform(img)
-
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int, int, int, str]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int, int, bool, str]:
         """Get a sample from the dataset."""
         orig_idx = None
         if idx < len(self.valid_images):
@@ -204,14 +200,10 @@ class AgeGenderDataset(Dataset):
             gender = self.genders[orig_idx]
 
         image = Image.open(img_path).convert("RGB")
-
-        if is_augmented:
-            image = self.apply_dynamic_augmentation(image)
-        else:
-            image = self.transform(image)
+        image = self.transform(image) # Base transform is always applied on CPU
 
         source_image = self.image_files[orig_idx] if orig_idx is not None else self.image_files[idx]
-        return image, age, gender, idx, source_image
+        return image, age, gender, is_augmented, source_image
 
 
 def get_transforms_configs() -> List[Tuple[str, Any]]:
@@ -448,11 +440,12 @@ class AgeGenderDataModule(pl.LightningDataModule):
             collate_fn=self.collate_fn,
         )
 
-    def collate_fn(self, batch: List[Tuple[torch.Tensor, int, int, int, str]]) -> Tuple[
-        torch.Tensor, torch.Tensor, torch.Tensor, Tuple[str, ...]]:
+    def collate_fn(self, batch: List[Tuple[torch.Tensor, int, int, bool, str]]) -> Tuple[
+        torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, Tuple[str, ...]]:
         """Custom collate function for DataLoader."""
-        images, ages, genders, _, image_paths = zip(*batch)
+        images, ages, genders, is_augmented, image_paths = zip(*batch)
         images = torch.stack(images)
         ages = torch.tensor(ages)
         genders = torch.tensor(genders)
-        return images, ages, genders, image_paths
+        is_augmented = torch.tensor(is_augmented, dtype=torch.bool)
+        return images, ages, genders, is_augmented, image_paths

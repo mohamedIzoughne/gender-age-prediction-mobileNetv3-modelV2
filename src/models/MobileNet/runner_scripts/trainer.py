@@ -8,7 +8,7 @@ if project_root not in sys.path:
 
 import torch
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import Timer
+from pytorch_lightning.callbacks import Timer, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from typing import Dict, Any
 import yaml
@@ -37,11 +37,21 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
     tb_logger = TensorBoardLogger(save_dir="logs/", name=PROJECT_NAME)
 
     callbacks = [
-        # MyEarlyStopping(monitor="val_total_loss", patience=10, mode="min"),
         BestMetricsCallback(),
         Timer(duration=None, interval="epoch"),
         LRMonitorCallback(),
     ]
+
+    ckpt_dir = "/content/AgeGenderCheckpoints/" if os.path.exists("/content/") else "checkpoints/"
+    checkpoint_callback = ModelCheckpoint(
+        dirpath=ckpt_dir,
+        filename="mobilenet-{epoch:02d}-{val_gender_acc:.4f}",
+        save_top_k=3,
+        monitor="val_gender_acc",
+        mode="max",
+        save_last=True
+    )
+    callbacks.append(checkpoint_callback)
 
     trainer = pl.Trainer(
         max_epochs=config["num_epochs"],
@@ -52,7 +62,13 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
         precision="16-mixed",
     )
 
-    trainer.fit(model, datamodule=data)
+    last_ckpt = os.path.join(ckpt_dir, "last.ckpt")
+    resume_ckpt = last_ckpt if os.path.exists(last_ckpt) else None
+
+    if resume_ckpt:
+        print(f"Resuming training from checkpoint: {resume_ckpt}")
+
+    trainer.fit(model, datamodule=data, ckpt_path=resume_ckpt)
 
     if serialize_final:
         accuracy = trainer.callback_metrics.get("val_gender_acc", 0)

@@ -13,7 +13,8 @@ from pytorch_lightning.callbacks import Callback
 from torchmetrics import Accuracy, MeanAbsoluteError
 from tqdm import tqdm
 import numpy as np
-from src.models.MobileNet.data_defs import AgeGenderDataModule
+from src.models.MobileNet.data_defs import AgeGenderDataModule, get_dynamic_augmentations
+from torchvision.transforms import v2 as transforms
 from typing import Dict, Any, List, Tuple, Optional
 
 torch.backends.cudnn.benchmark = True
@@ -77,6 +78,13 @@ class AgeGenderClassifier(pl.LightningModule):
         self.gender_accuracy = Accuracy(task="binary")
         self.train_gender_accuracy = Accuracy(task="binary")
         self.age_mae = MeanAbsoluteError()
+
+        if self.get_param("use_dynamic_augmentation", False):
+            augmentation_configs = get_dynamic_augmentations(include_normalize=False)
+            transforms_list = [transform for _, transform in augmentation_configs]
+            self.dynamic_augment_transform = transforms.Compose(transforms_list)
+        else:
+            self.dynamic_augment_transform = None
 
     def get_param(self, key: str, default: Any = None) -> Any:
         """Safely get a parameter from the config."""
@@ -161,6 +169,20 @@ class AgeGenderClassifier(pl.LightningModule):
     def on_train_epoch_end(self) -> None:
         """Placeholder for any end-of-epoch operations."""
         pass
+
+    def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
+        """Apply augmentations on the GPU after data transfer."""
+        if self.trainer.training:
+            x, age, gender, is_augmented, image_paths = batch
+            
+            if self.dynamic_augment_transform is not None and is_augmented.any():
+                augmented_x = self.dynamic_augment_transform(x[is_augmented])
+                x[is_augmented] = augmented_x
+                
+            return x, age, gender, image_paths
+        else:
+            x, age, gender, is_augmented, image_paths = batch
+            return x, age, gender, image_paths
 
     def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Any], batch_idx: int) -> Dict[str, torch.Tensor]:
         """Perform a test step."""
@@ -378,7 +400,7 @@ def predict_with_model(
 
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Processing batches", unit="batch"):
-            x, true_age, true_gender, image_paths = batch
+            x, true_age, true_gender, is_augmented, image_paths = batch
             x, true_age, true_gender = [
                 b.to(device) for b in (x, true_age, true_gender)
             ]
