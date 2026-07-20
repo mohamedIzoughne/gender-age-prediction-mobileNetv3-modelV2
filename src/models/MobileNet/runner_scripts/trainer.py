@@ -8,7 +8,7 @@ if project_root not in sys.path:
 
 import torch
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import Timer, ModelCheckpoint
+from pytorch_lightning.callbacks import Timer, ModelCheckpoint, TQDMProgressBar
 from pytorch_lightning.loggers import TensorBoardLogger
 from typing import Dict, Any
 import yaml
@@ -40,6 +40,7 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
         BestMetricsCallback(),
         Timer(duration=None, interval="epoch"),
         LRMonitorCallback(),
+        TQDMProgressBar(refresh_rate=50),
     ]
 
     if os.path.exists("/content/"):
@@ -65,6 +66,7 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
         accelerator="gpu",
         devices=1,
         precision="16-mixed",
+        log_every_n_steps=50,
     )
 
     last_ckpt = os.path.join(ckpt_dir, "last.ckpt")
