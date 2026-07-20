@@ -1,0 +1,31 @@
+# Model configuration
+model_type: "mobilenet_v3_small"
+num_epochs: 20
+freeze_epochs: 1
+
+# Data configuration
+batch_size: 128
+ds_path: "dataset/folds/fold_0"
+#ds_path: "dataset/fold_2_4_8"
+
+# Optimization parameters
+base_lr: 0.008203633726050548
+weight_decay: 0.0242358121809478
+lr_mult: 9.53764515105303
+lr_scheduler: "cosine"
+pct_start: 0.3820296456493033
+
+# Task balancing
+gender_loss_weight: 0.9
+
+# Additional transforms
+include_color_jitter: true
+include_random_erasing: true
+include_random_horizontal_flip: true
+include_random_rotation: true
+include_random_perspective: true
+include_center_crop: true
+include_random_affine: true
+include_random_grayscale: true
+include_gaussian_blur: true
+include_gaussian_noise: true

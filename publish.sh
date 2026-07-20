@@ -1,0 +1,1 @@
+cd export && git add . && git commit -m "PUBLISH" && git push

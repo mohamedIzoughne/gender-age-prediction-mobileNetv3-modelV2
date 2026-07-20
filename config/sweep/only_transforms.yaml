@@ -1,0 +1,56 @@
+
+sweep_prefix: "only_transforms"
+method: random
+metric:
+  name: val_total_loss
+  goal: minimize
+
+
+parameters:
+  # Fixed parameters from last run
+  model_type:
+    value: "mobilenet_v3_small"
+  num_epochs:
+    value: 20
+  ds_path:
+    value: "dataset/fold_2_4_8"
+  pct_start:
+    value: 0.3820296456493033
+  lr_mult:
+    value: 9.53764515105303
+  base_lr:
+    value: 0.008203633726050548
+  lr_scheduler:
+    value: "cosine"
+  batch_size:
+    value: 128
+  freeze_epochs:
+    value: 1
+  weight_decay:
+    value: 0.0242358121809478
+  gender_loss_weight:
+    value: 0.9
+
+  # Tuned parameters (transforms)
+  include_random_erasing:
+    values: [ true, false ]
+  include_color_jitter:
+    values: [ true, false ]
+  include_random_horizontal_flip:
+    values: [ true, false ]
+  include_random_rotation:
+    values: [ true, false ]
+  include_random_perspective:
+    values: [ true, false ]
+  include_center_crop:
+    values: [ true, false ]
+  include_random_affine:
+    values: [ true, false ]
+  include_random_grayscale:
+    values: [ true, false ]
+  include_gaussian_blur:
+    values: [ true, false ]
+  include_gaussian_noise:
+    values: [ true, false ]
+
+count: 50

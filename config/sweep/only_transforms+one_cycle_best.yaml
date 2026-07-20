@@ -1,0 +1,64 @@
+sweep_prefix: "one_cycle_transforms_fixed"
+
+method: grid
+metric:
+  name: val_total_loss
+  goal: minimize
+
+parameters:
+  num_epochs:
+    value: 15
+  model_type:
+    value: "mobilenet_v3_small"
+  ds_path:
+    value: "dataset/fold_0_1_2_4_8"
+  batch_size:
+    value: 256
+  freeze_epochs:
+    value: 0
+  gender_loss_weight:
+    value: 0.9
+  base_lr:
+    value: 0.0068893981577029285
+  weight_decay:
+    value: 0.00019323262043373016
+  dropout:
+    value: 0.1
+  l1_lambda:
+    value: 0.0001
+  lr_scheduler:
+    value: "one_cycle"
+  max_lr:
+    value: 0.012321315111072404
+  anneal_strategy:
+    value: "cos"
+  pct_start:
+    value: 0.36685557351085574
+  div_factor:
+    value: 24
+  final_div_factor:
+    value: 2873
+
+  # Tuned parameters (transforms)
+  include_random_erasing:
+    values: [true, false]
+  include_color_jitter:
+    values: [true, false]
+  include_random_horizontal_flip:
+    values: [true, false]
+  include_random_rotation:
+    values: [true, false]
+  include_random_perspective:
+    values: [true, false]
+  include_center_crop:
+    values: [true, false]
+  include_random_affine:
+    values: [true, false]
+  include_random_grayscale:
+    values: [true, false]
+  include_gaussian_blur:
+    values: [true, false]
+  include_gaussian_noise:
+    values: [true, false]
+
+count: 1024  # 2^10 combinations of transform parameters

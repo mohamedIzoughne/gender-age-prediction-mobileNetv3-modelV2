@@ -1,0 +1,89 @@
+sweep_prefix: "one_cycle_tuning"
+
+method: bayes
+metric:
+  name: val_total_loss
+  goal: minimize
+
+num_epochs: 2
+
+parameters:
+  num_epochs:
+    value: 2
+
+  model_type:
+    value: "mobilenet_v3_small"
+  ds_path:
+    value: "dataset/folds/fold_0"
+
+  batch_size:
+    value: 64
+  freeze_epochs:
+    value: 0
+  gender_loss_weight:
+    value: 0.9
+
+  base_lr:
+    distribution: uniform
+    min: 0.005
+    max: 0.85
+  weight_decay:
+    distribution: uniform
+    min: 0.00001
+    max: 0.1
+#
+#
+  # reg
+  dropout:
+    values: [ 0.0, 0.5, 0.65 ]
+  l1_lambda:
+    values: [ 0.000001, 0.001 ]
+#
+  #scheduler
+  lr_scheduler:
+    value: "one_cycle"
+
+  max_lr:
+    distribution: uniform
+    min: 0.01
+    max: 0.99
+
+  anneal_strategy:
+    value: "cos"
+
+  pct_start:
+    distribution: uniform
+    min: 0.2
+    max: 0.8
+  div_factor:
+    distribution: int_uniform
+    min: 10
+    max: 50
+  final_div_factor:
+    distribution: int_uniform
+    min: 1000
+    max: 10000
+#
+  # Transforms
+  include_random_grayscale:
+    value: false
+  include_random_perspective:
+    value: false
+  include_random_erasing:
+    value: false
+  include_random_rotation:
+    value: false
+  include_center_crop:
+    value: false
+  include_random_horizontal_flip:
+    value: false
+  include_color_jitter:
+    value: false
+  include_random_affine:
+    value: false
+  include_gaussian_blur:
+    value: false
+  include_gaussian_noise:
+    value: false
+
+count: 100

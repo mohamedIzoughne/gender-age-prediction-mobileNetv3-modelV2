@@ -1,0 +1,74 @@
+# Best one_cycle and so far overall config
+# https://wandb.ai/qqwy/ag_classifier_main/runs/qwhouv06/workspace?nw=nwuserpauliusp7
+# val_total_loss:      0.749
+# val_age_mae:         5.471
+# best_val_gender_acc: 0.921
+# train_gender_acc:    0.981
+
+prefix: "full_dynamic_aug_tune_18_cycle+3"
+
+use_dynamic_augmentation: True
+dynamic_augmentation_mult: 0.3
+
+num_aug_bins: 9
+
+# Model configuration
+model_type: "mobilenet_v3_small"
+
+#ds_path: "dataset/folds/fold_0"
+#val_path: "dataset/prod_folds_8_9_test"
+#train_path: "dataset/prod_folds_8_first_train"
+#ds_path: "dataset/fold_0_1_2_4_8"
+#ds_path: "dataset/full"
+val_path: "dataset/test_2_folds_last"
+train_path: "dataset/train_8_folds_first"
+
+num_epochs: 19
+#num_epochs: 10
+batch_size: 256
+freeze_epochs: 0
+gender_loss_weight: 0.9
+
+# Optimizer params
+base_lr: 0.0068893981577029285
+weight_decay: 0.00019323262043373016
+
+# Regularization params
+dropout: 0.1
+l1_lambda: 0.0001
+
+# Scheduler specific params
+lr_scheduler: "one_cycle"
+max_lr: 0.012321315111072404
+anneal_strategy: "cos"
+pct_start: 0.36685557351085574
+div_factor: 24
+final_div_factor: 2873
+
+#override_cycle_epoch_count: 5
+#override_cycle_epoch_count: 17
+override_cycle_epoch_count: 17
+
+
+# Transform params
+#include_center_crop: True
+#include_color_jitter: True
+#include_gaussian_blur: True
+#include_gaussian_noise: False
+#include_random_affine: False
+#include_random_erasing: False
+#include_random_grayscale: True
+#include_random_horizontal_flip: False
+#include_random_perspective: True
+#include_random_rotation: True
+
+include_center_crop: False
+include_color_jitter: true
+include_gaussian_blur: false
+include_gaussian_noise: false
+include_random_affine: false
+include_random_erasing: true
+include_random_grayscale: true
+include_random_horizontal_flip: false
+include_random_perspective: true
+include_random_rotation: true

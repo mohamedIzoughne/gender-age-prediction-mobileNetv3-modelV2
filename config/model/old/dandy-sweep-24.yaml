@@ -1,0 +1,36 @@
+#https://wandb.ai/qqwy/age_gender_classifier_test/runs/3dexsqz6/overview
+
+# Peak:
+# ACC = 0.853
+# MAE = 10.563
+
+#Model configuration
+model_type: "mobilenet_v3_small"
+num_epochs: 20
+freeze_epochs: 1
+
+# Data configuration
+batch_size: 128
+ds_path: "dataset/fold_2_4_8"
+
+# Optimization parameters
+base_lr: 0.008203633726050548
+weight_decay: 0.0242358121809478
+lr_mult: 9.53764515105303
+lr_scheduler: "cosine"
+pct_start: 0.3820296456493033
+
+# Task balancing
+gender_loss_weight: 0.9
+
+# Additional transforms
+include_color_jitter: true
+include_random_erasing: false
+include_random_horizontal_flip: true
+include_random_rotation: false
+include_random_perspective: false
+include_center_crop: false
+include_random_affine: false
+include_random_grayscale: false
+include_gaussian_blur: false
+include_gaussian_noise: true

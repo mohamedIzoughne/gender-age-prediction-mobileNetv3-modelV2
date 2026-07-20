@@ -1,0 +1,97 @@
+#
+#
+#
+sweep_prefix: "reduce_on_plateau"
+method: bayes
+metric:
+  name: val_total_loss
+  goal: minimize
+
+num_epochs: 1
+
+parameters:
+  # Fixed parameters
+  model_type:
+    value: "mobilenet_v3_small"
+  ds_path:
+    #    value: "dataset/folds/fold_0"
+    value: "dataset/fold_0_1_2_4_8"
+  #OPTIMIZER
+
+  num_epochs:
+    value: 1
+
+  weight_decay:
+    distribution: uniform
+    min: 0.005
+    max: 0.05
+
+  base_lr:
+    distribution: uniform
+    min: 0.01
+    max: 0.1
+  # - - -
+
+
+  # Scheduler specific
+
+#  # Scheduler
+#  lr_scheduler: "reduce_on_plateau"
+#  factor: 0.8
+#  patience: 0
+#  #threshold: -0.075
+#  threshold: 0.05
+
+  lr_scheduler:
+    values: [ reduce_on_plateau ]
+
+  threshold:
+    distribution: uniform
+    min: 0.0
+    max: 0.15
+
+  factor:
+    distribution: uniform
+    min: 0.1
+    max: 0.95
+
+  patience:
+    distribution: int_uniform
+    min: 0
+    max: 2
+  # - - -
+
+  batch_size:
+    value: 384
+  #    values: [ 32, 64, 128, 256, 384 ]
+
+  freeze_epochs:
+    value: 3
+  #    distribution: int_uniform
+  #    min: 0
+  #    max: 5
+
+
+  include_random_grayscale:
+    values: [ True ]
+  include_random_perspective:
+    values: [ True ]
+  include_random_erasing:
+    values: [ True ]
+  include_random_rotation:
+    values: [ True ]
+  include_center_crop:
+    values: [ True ]
+  include_random_horizontal_flip:
+    values: [ True ]
+  include_color_jitter:
+    values: [ True ]
+
+  include_random_affine:
+    values: [ False ]
+  include_gaussian_blur:
+    values: [ False ]
+  include_gaussian_noise:
+    values: [ False ]
+
+count: 50

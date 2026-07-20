@@ -1,0 +1,63 @@
+# Model configuration
+
+ds_path: "dataset/folds/fold_0"
+
+model_type: "efficientnet_b0"
+num_epochs: 4
+
+
+batch_size: 64
+aug_mode: 0
+
+
+weight_decay: 0.0001
+base_lr: 0.001
+lr_mult: 10
+lr_scheduler: one_cycle
+pct_start: 0.3
+gender_loss_weight: 0.9
+
+  # weight_decay=config.weight_decay,
+  # base_lr=config.base_lr,
+  # lr_mult=config.lr_mult,
+  # lr_scheduler_type=config.lr_scheduler,
+# pct_start=config.pct_start,
+# gender_loss_weight=config.gender_loss_weight
+
+
+
+## Data configuration
+#batch_size: 80  # EfficientNet typically uses smaller batch sizes
+#aug_mode: 0
+#ds_path: "dataset/folds/fold_0"
+##ds_path: "dataset/fold_2_4_8"
+#
+## Optimization parameters
+#base_lr: 0.001  # Start with a slightly lower learning rate
+#weight_decay: 0.0001  # EfficientNet often uses less weight decay
+#lr_mult: 10
+#lr_scheduler: "one_cycle"
+#pct_start: 0.3
+#
+## Task balancing
+#gender_loss_weight: 0.5
+#
+## Training specific
+#gradient_clip_val: 1.0  # Add gradient clipping to stabilize training
+#
+## Regularization
+#dropout_rate: 0.2  # Add some dropout for regularization
+#
+## Data Augmentation (if not defined in aug_mode)
+#random_erasing_prob: 0.2
+#mixup_alpha: 0.2  # Optional: Add mixup augmentation
+#
+## Early Stopping
+#patience: 2
+#monitor: "val_total_loss"
+#
+## Logging
+#log_every_n_steps: 50
+#
+## Hardware
+#precision: 16  # Use mixed precision for faster training

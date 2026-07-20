@@ -1,0 +1,27 @@
+# Default config
+# i.e. added metrics for:
+# Run 1: ACC = 0.86 MAE = 10.5
+
+# https://wandb.ai/qqwy/age_gender_classifier_test/runs/i9tczn2b/overview
+
+# Model configuration
+model_type: "mobilenet_v3_small"
+num_epochs: 20
+freeze_epochs: 1
+
+# Data configuration
+batch_size: 128
+ds_path: "dataset/fold_2_4_8"
+
+# Optimization parameters
+base_lr: 0.008203633726050548
+weight_decay: 0.0242358121809478
+lr_mult: 9.53764515105303
+lr_scheduler: "cosine"
+pct_start: 0.3820296456493033
+
+# Task balancing
+gender_loss_weight: 0.9
+
+include_color_jitter: false
+include_random_erasing: false

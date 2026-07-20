@@ -1,0 +1,60 @@
+#
+#
+#
+sweep_prefix: "default"
+method: bayes
+metric:
+  name: val_total_loss
+  goal: minimize
+
+parameters:
+  # Fixed parameters
+  model_type:
+    value: "mobilenet_v3_small"
+  num_epochs:
+    value: 20
+  ds_path:
+    value: "dataset/fold_2_4_8"
+
+  # Tuned parameters
+  pct_start:
+    distribution: uniform
+    min: 0.1
+    max: 0.5
+
+  lr_mult:
+    distribution: uniform
+    min: 3
+    max: 15
+
+  base_lr:
+    distribution: uniform
+    min: 0.0001
+    max: 0.01
+
+  lr_scheduler:
+    values: [ one_cycle, cosine ]  # Compare these two schedulers
+
+  batch_size:
+    values: [ 128, 256, 384 ]
+
+  freeze_epochs:
+    distribution: int_uniform
+    min: 0
+    max: 5
+
+  weight_decay:
+    distribution: uniform
+    min: 0.005
+    max: 0.05
+
+  gender_loss_weight:
+    values: [ 0.9 ]
+
+  include_random_erasing:
+    values: [ True, False ]
+
+  include_color_jitter:
+    values: [ True, False ]
+
+count: 50

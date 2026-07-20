@@ -1,0 +1,68 @@
+sweep_prefix: "optimal_only_freeze"
+
+method: grid
+metric:
+  name: val_total_loss
+  goal: minimize
+
+parameters:
+  use_dynamic_augmentation:
+    values: [False, True]
+  model_type:
+    value: "mobilenet_v3_small"
+  val_path:
+    value: "dataset/test_2_folds_last"
+  train_path:
+    value: "dataset/train_8_folds_first"
+  num_epochs:
+    value: 18
+  batch_size:
+    value: 256
+  gender_loss_weight:
+    value: 0.9
+  base_lr:
+    value: 0.0068893981577029285
+  weight_decay:
+    value: 0.00019323262043373016
+  dropout:
+    value: 0.1
+  l1_lambda:
+    value: 0.0001
+  lr_scheduler:
+    value: "one_cycle"
+  max_lr:
+    value: 0.012321315111072404
+  anneal_strategy:
+    value: "cos"
+  pct_start:
+    value: 0.36685557351085574
+  div_factor:
+    value: 24
+  final_div_factor:
+    value: 2873
+  override_cycle_epoch_count:
+    value: 15
+  include_center_crop:
+    value: true
+  include_color_jitter:
+    value: true
+  include_gaussian_blur:
+    value: false
+  include_gaussian_noise:
+    value: false
+  include_random_affine:
+    value: false
+  include_random_erasing:
+    value: true
+  include_random_grayscale:
+    value: true
+  include_random_horizontal_flip:
+    value: false
+  include_random_perspective:
+    value: true
+  include_random_rotation:
+    value: true
+  freeze_epochs:
+    values: [0, 1, 2]
+
+count: 6

@@ -1,0 +1,77 @@
+#
+#
+#
+sweep_prefix: "step_lr"
+method: bayes
+metric:
+  name: val_total_loss
+  goal: minimize
+
+num_epochs: 20
+parameters:
+  # Fixed parameters
+  model_type:
+    value: "mobilenet_v3_small"
+  ds_path:
+    value: "dataset/fold_0_1_2_4_8"
+
+  #OPTIMIZER
+  weight_decay:
+    distribution: uniform
+    min: 0.01
+    max: 0.05
+
+  base_lr:
+    distribution: uniform
+    min: 0.0001
+    max: 0.1
+  # - - -
+
+
+  # Scheduler specific
+  lr_scheduler:
+    values: [ step_lr ]
+
+  step_size:
+    distribution: int_uniform
+    min: 1
+    max: 5
+
+  gamma:
+    distribution: uniform
+    min: 0.05
+    max: 0.5
+  # - - -
+
+  batch_size:
+    values: [ 32, 64, 128, 256, 384 ]
+
+  freeze_epochs:
+    distribution: int_uniform
+    min: 0
+    max: 3
+
+
+  include_random_grayscale:
+    values: [ True ]
+  include_random_perspective:
+    values: [ True ]
+  include_random_erasing:
+    values: [ True ]
+  include_random_rotation:
+    values: [ True ]
+  include_center_crop:
+    values: [ True ]
+  include_random_horizontal_flip:
+    values: [ True ]
+  include_color_jitter:
+    values: [ True ]
+
+  include_random_affine:
+    values: [ False ]
+  include_gaussian_blur:
+    values: [ False ]
+  include_gaussian_noise:
+    values: [ False ]
+
+count: 20
