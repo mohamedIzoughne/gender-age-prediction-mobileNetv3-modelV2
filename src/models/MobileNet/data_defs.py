@@ -6,8 +6,7 @@ from typing import List, Tuple, Dict, Any, Optional
 import pytorch_lightning as pl
 import torch
 from PIL import Image
-from fastai.data.load import DataLoader
-from torch.utils.data import Dataset
+from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import v2 as transforms
 import torchvision.utils as vutils
 import random as rnd
@@ -419,8 +418,9 @@ class AgeGenderDataModule(pl.LightningDataModule):
             self.train_dataset,
             batch_size=self.config["batch_size"],
             shuffle=True,
-            num_workers=16,
+            num_workers=2,
             persistent_workers=True,
+            pin_memory=True,
             collate_fn=self.collate_fn,
         )
 
@@ -429,8 +429,9 @@ class AgeGenderDataModule(pl.LightningDataModule):
         return DataLoader(
             self.test_dataset,
             batch_size=self.config["batch_size"],
-            num_workers=16,
+            num_workers=2,
             persistent_workers=True,
+            pin_memory=True,
             collate_fn=self.collate_fn,
         )
 
@@ -439,8 +440,9 @@ class AgeGenderDataModule(pl.LightningDataModule):
         return DataLoader(
             self.val_dataset,
             batch_size=self.config["batch_size"],
-            num_workers=16,
+            num_workers=2,
             persistent_workers=True,
+            pin_memory=True,
             collate_fn=self.collate_fn,
         )
 
