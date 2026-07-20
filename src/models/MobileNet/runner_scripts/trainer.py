@@ -42,7 +42,12 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
         LRMonitorCallback(),
     ]
 
-    ckpt_dir = "/content/drive/MyDrive/AgeGenderCheckpoints/" if os.path.exists("/content/") else "checkpoints/"
+    if os.path.exists("/content/"):
+        if not os.path.exists("/content/drive/MyDrive/"):
+            raise FileNotFoundError("Google Drive is not mounted! Please mount it to save checkpoints before running.")
+        ckpt_dir = "/content/drive/MyDrive/AgeGenderCheckpoints/"
+    else:
+        ckpt_dir = "checkpoints/"
     checkpoint_callback = ModelCheckpoint(
         dirpath=ckpt_dir,
         filename="mobilenet-{epoch:02d}-{val_gender_acc:.4f}",
