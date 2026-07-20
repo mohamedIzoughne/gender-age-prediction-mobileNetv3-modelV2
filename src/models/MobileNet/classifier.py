@@ -162,9 +162,9 @@ class AgeGenderClassifier(pl.LightningModule):
         """Placeholder for any end-of-epoch operations."""
         pass
 
-    def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Any, Any], batch_idx: int) -> Dict[str, torch.Tensor]:
+    def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Any], batch_idx: int) -> Dict[str, torch.Tensor]:
         """Perform a test step."""
-        x, age, gender, _, _ = batch
+        x, age, gender, _ = batch
         gender_pred, age_pred = self(x)
 
         return {
@@ -186,12 +186,12 @@ class AgeGenderClassifier(pl.LightningModule):
         """Get the current learning rate."""
         return self.optimizers().param_groups[0]["lr"]
 
-    def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Any, Any], batch_idx: int) -> torch.Tensor:
+    def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Any], batch_idx: int) -> torch.Tensor:
         """Perform a training step."""
         current_lr = self.get_current_lr()
         self.log("step_LR", current_lr, on_step=True, on_epoch=False, prog_bar=True)
 
-        x, age, gender, _, _ = batch
+        x, age, gender, _ = batch
         gender_pred, age_pred = self(x)
 
         gender_loss = self.gender_loss(gender_pred, gender)
@@ -236,9 +236,9 @@ class AgeGenderClassifier(pl.LightningModule):
 
         return total_loss
 
-    def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Any, Any], batch_idx: int) -> torch.Tensor:
+    def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Any], batch_idx: int) -> torch.Tensor:
         """Perform a validation step."""
-        x, age, gender, _, _ = batch
+        x, age, gender, _ = batch
         gender_pred, age_pred = self(x)
 
         gender_loss = self.gender_loss(gender_pred, gender)
