@@ -19,9 +19,9 @@ model_type: "mobilenet_v3_small"
 #val_path: "dataset/prod_folds_8_9_test"
 #train_path: "dataset/prod_folds_8_first_train"
 #ds_path: "dataset/fold_0_1_2_4_8"
-#ds_path: "dataset/full"
-val_path: "dataset/test_2_folds_last"
-train_path: "dataset/train_8_folds_first"
+ds_path: "/content/data/UTKFace"
+# val_path: "dataset/test_2_folds_last"
+# train_path: "dataset/train_8_folds_first"
 
 num_epochs: 19
 #num_epochs: 10
