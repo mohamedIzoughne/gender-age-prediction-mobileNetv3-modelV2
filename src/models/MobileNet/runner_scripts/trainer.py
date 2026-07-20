@@ -42,7 +42,7 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
         LRMonitorCallback(),
     ]
 
-    ckpt_dir = "/content/AgeGenderCheckpoints/" if os.path.exists("/content/") else "checkpoints/"
+    ckpt_dir = "/content/drive/MyDriveAgeGenderCheckpoints/" if os.path.exists("/content/") else "checkpoints/"
     checkpoint_callback = ModelCheckpoint(
         dirpath=ckpt_dir,
         filename="mobilenet-{epoch:02d}-{val_gender_acc:.4f}",
