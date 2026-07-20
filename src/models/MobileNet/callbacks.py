@@ -27,8 +27,9 @@ class BestMetricsCallback(Callback):
                     )
 
     def on_fit_end(self, trainer, pl_module):
-        for k, v in self.best_metrics.items():
-            trainer.logger.experiment.summary[f"best_{k}"] = v
+        if trainer.logger:
+            metrics_to_log = {f"best_{k}": v for k, v in self.best_metrics.items()}
+            trainer.logger.log_metrics(metrics_to_log)
 
 
 class LRMonitorCallback(Callback):
