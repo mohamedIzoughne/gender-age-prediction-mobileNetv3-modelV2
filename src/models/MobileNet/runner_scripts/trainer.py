@@ -51,10 +51,10 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
         ckpt_dir = "checkpoints/"
     checkpoint_callback = ModelCheckpoint(
         dirpath=ckpt_dir,
-        filename="mobilenet-{epoch:02d}-{val_gender_acc:.4f}",
+        filename="mobilenet-{epoch:02d}-{val_total_loss:.4f}",
         save_top_k=3,
-        monitor="val_gender_acc",
-        mode="max",
+        monitor="val_total_loss",
+        mode="min",
         save_last=True
     )
     callbacks.append(checkpoint_callback)
@@ -78,13 +78,25 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
     trainer.fit(model, datamodule=data, ckpt_path=resume_ckpt)
 
     if serialize_final:
-        accuracy = trainer.callback_metrics.get("val_gender_acc", 0)
+        best_model_path = checkpoint_callback.best_model_path
+        if best_model_path and os.path.exists(best_model_path):
+            print(f"Loading best model from {best_model_path} for final serialization...")
+            checkpoint = torch.load(best_model_path)
+            model.load_state_dict(checkpoint['state_dict'])
+            best_loss = checkpoint_callback.best_model_score
+            best_loss = best_loss.item() if best_loss is not None else 0
+        else:
+            print("No best model found. Serializing the last epoch instead.")
+            best_loss = trainer.callback_metrics.get("val_total_loss", 0)
+            if isinstance(best_loss, torch.Tensor):
+                best_loss = best_loss.item()
+
         epochs_run = trainer.current_epoch + 1
 
         if "prefix" in config:
-            save_path = f"{PROJECT_NAME}_{config['prefix']}_{epochs_run}_{accuracy:.4f}_.pth"
+            save_path = f"{PROJECT_NAME}_{config['prefix']}_epoch{epochs_run}_loss{best_loss:.4f}.pth"
         else:
-            save_path = f"{PROJECT_NAME}_{epochs_run}_{accuracy:.4f}.pth"
+            save_path = f"{PROJECT_NAME}_epoch{epochs_run}_loss{best_loss:.4f}.pth"
 
         save_model(model, save_path)
 

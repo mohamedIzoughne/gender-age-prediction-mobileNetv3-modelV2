@@ -13,7 +13,7 @@ dynamic_augmentation_mult: 0.3
 num_aug_bins: 9
 
 # Model configuration
-model_type: "mobilenet_v3_small"
+model_type: "mobilenet_v3_large"
 
 #ds_path: "dataset/folds/fold_0"
 #val_path: "dataset/prod_folds_8_9_test"
