@@ -4,7 +4,7 @@
 sweep_prefix: "reduce_on_plateau"
 method: bayes
 metric:
-  name: val_total_loss
+  name: train_total_loss
   goal: minimize
 
 num_epochs: 1

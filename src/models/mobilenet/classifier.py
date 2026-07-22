@@ -13,7 +13,7 @@ from pytorch_lightning.callbacks import Callback
 from torchmetrics import Accuracy, MeanAbsoluteError
 from tqdm import tqdm
 import numpy as np
-from src.models.MobileNet.data_defs import AgeGenderDataModule, get_dynamic_augmentations
+from src.models.mobilenet.data_defs import AgeGenderDataModule, get_dynamic_augmentations
 from torchvision.transforms import v2 as transforms
 from typing import Dict, Any, List, Tuple, Optional
 
@@ -98,16 +98,18 @@ class AgeGenderClassifier(pl.LightningModule):
 
     def check_freeze_base_model(self) -> None:
         """Freeze the base model if specified in config."""
-        if self.get_param("freeze_epochs") > 0:
-            print(f'Freezing base model for: {self.get_param("freeze_epochs")}')
+        freeze_epochs = self.get_param("freeze_epochs")
+        if freeze_epochs > 0:
+            print(f"Freezing base model for: {freeze_epochs} epochs")
             for param in self.base_model.parameters():
                 param.requires_grad = False
 
     def check_unfreeze_base_model(self) -> None:
         """Unfreeze the base model after specified epochs."""
-        if self.current_epoch == self.get_param("freeze_epochs"):
+        freeze_epochs = self.get_param("freeze_epochs")
+        if self.current_epoch == freeze_epochs:
             print(
-                f"Unfreezing base model:\n  after self.current_epoch({self.current_epoch}) == self.get_param('freeze_epochs')({self.get_param('freeze_epochs')})"
+                f"Unfreezing base model:\n  after self.current_epoch({self.current_epoch}) == freeze_epochs({freeze_epochs})"
             )
             for param in self.base_model.parameters():
                 param.requires_grad = True
@@ -117,10 +119,9 @@ class AgeGenderClassifier(pl.LightningModule):
         model_type = self.get_param("model_type")
         pretrained = self.get_param("pretrained", True)
 
-        print(f"using model_type = {model_type} || pretrained = {pretrained} ||")
+        print(f"Using model: {model_type} | Pretrained: {pretrained}")
 
         if model_type == "mobilenet_v3_large":
-            print("using mobilenet_v3_large")
             self.base_model = models.mobilenet_v3_large(pretrained=pretrained)
         elif model_type == "mobilenet_v3_small":
             self.base_model = models.mobilenet_v3_small(pretrained=pretrained)
@@ -129,6 +130,7 @@ class AgeGenderClassifier(pl.LightningModule):
         else:
             raise ValueError(f"Unsupported model type: {model_type}")
 
+        # Extract features and strip the original classification heads
         if "mobilenet" in model_type:
             if hasattr(self.base_model, "classifier"):
                 if isinstance(self.base_model.classifier, nn.Sequential):
@@ -147,9 +149,9 @@ class AgeGenderClassifier(pl.LightningModule):
             raise ValueError(f"Unexpected model type: {model_type}")
 
         self.global_pool = nn.AdaptiveAvgPool2d(1)
-
         dropout_rate = self.get_param("dropout", 0)
 
+        # Multi-task outputs: age regression + gender classification
         self.gender_classifier = nn.Sequential(
             nn.Dropout(p=dropout_rate), nn.Linear(num_features, 2)
         )

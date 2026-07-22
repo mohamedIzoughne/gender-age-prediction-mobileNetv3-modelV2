@@ -2,7 +2,7 @@ sweep_prefix: "optimal_only_freeze"
 
 method: grid
 metric:
-  name: val_total_loss
+  name: train_total_loss
   goal: minimize
 
 parameters:

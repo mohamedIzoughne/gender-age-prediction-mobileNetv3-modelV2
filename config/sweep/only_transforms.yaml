@@ -2,7 +2,7 @@
 sweep_prefix: "only_transforms"
 method: random
 metric:
-  name: val_total_loss
+  name: train_total_loss
   goal: minimize
 
 

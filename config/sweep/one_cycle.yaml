@@ -2,7 +2,7 @@ sweep_prefix: "one_cycle_b256"
 
 method: bayes
 metric:
-  name: val_total_loss
+  name: train_total_loss
   goal: minimize
 
 num_epochs: 15

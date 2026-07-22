@@ -1,4 +1,5 @@
 """
+Transforms selection and impact evaluation script.
 Used for selecting transformers and measuring their impact in a more structured way.
 """
 
@@ -6,12 +7,18 @@ import yaml
 import wandb
 from typing import Dict, Any
 
-import src.models.MobileNet.runner_scripts.trainer as trainer
+import src.runners.trainer as trainer
 
 PREFIX = "select_transforms"
 
 
-def run_individual_trials(config: Dict[str, Any]):
+def run_individual_trials(config: Dict[str, Any]) -> None:
+    """
+    Runs individual training trials for each transform setting in config.
+
+    Args:
+        config (dict): Training and augmentation configurations.
+    """
     # Extract only transform parameters
     include_params = {k: v for k, v in config.items() if k.startswith("include_")}
 
@@ -50,3 +57,4 @@ if __name__ == "__main__":
     config = trainer.load_config("config/model/swept-sweep-34.yaml")
 
     run_individual_trials(config)
+

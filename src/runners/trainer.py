@@ -1,8 +1,13 @@
+"""
+Training script for the Age & Gender classification model.
+Supports logging via TensorBoard and model checkpointing.
+"""
+
 import os
 import sys
 
 # Add the project root to sys.path to resolve 'src' module imports
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
@@ -13,23 +18,40 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from typing import Dict, Any
 import yaml
 
-from src.models.MobileNet.callbacks import (
+from src.models.mobilenet.callbacks import (
     EarlyStoppingCB,
     BestMetricsCallback,
     LRMonitorCallback,
 )
-from src.models.MobileNet.data_loader import create_dataloaders
-from src.models.MobileNet.classifier import AgeGenderClassifier
+from src.models.mobilenet.data_loader import create_dataloaders
+from src.models.mobilenet.classifier import AgeGenderClassifier
 
 PROJECT_NAME = "ag_classifier_main"
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
+    """
+    Load YAML configuration from path.
+
+    Args:
+        config_path (str): Filepath to the config.
+
+    Returns:
+        dict: Parsed configurations.
+    """
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
 
 
 def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
+    """
+    Initialize data, model, and trainer to run fitting pipeline.
+
+    Args:
+        config (dict): Configuration containing model & training options.
+        sweep_run (bool): Flag denoting whether execution is part of a sweep.
+        serialize_final (bool): Whether to serialize model to model_store/ upon completion.
+    """
     print(f"\n - - - \nConfig:\n{dict(config)}\n\n - - - \n")
 
     data = create_dataloaders(config)
@@ -104,18 +126,33 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
 def save_model(
     model: pl.LightningModule, save_path: str = "model_checkpoint.pth"
 ) -> None:
-    """Saves the model state dict and full configuration."""
+    """
+    Saves the model state dict and full configuration.
+
+    Args:
+        model (pl.LightningModule): The trained classifier module.
+        save_path (str): Destination filename inside 'model_store/'.
+    """
+    os.makedirs("model_store", exist_ok=True)
     torch.save(
         {
             "model_state_dict": model.state_dict(),
-            "config": model.config,  # Save the full configuration
+            "config": model.config,
         },
         f"model_store/{save_path}",
     )
 
 
 def load_model(path: str = "model_checkpoint.pth") -> AgeGenderClassifier:
-    """Loads a saved model checkpoint and returns an initialized AgeGenderClassifier."""
+    """
+    Loads a saved model checkpoint and returns an initialized AgeGenderClassifier.
+
+    Args:
+        path (str): Filename of target pth checkpoint in 'model_store/'.
+
+    Returns:
+        AgeGenderClassifier: Initialized PyTorch Lightning classifier model.
+    """
     checkpoint = torch.load(f"model_store/{path}")
     config = checkpoint.get("config", {})
 
@@ -134,3 +171,4 @@ if __name__ == "__main__":
     config_path = os.path.join(project_root, "config/model/swept-sweep-34_improved_DYNAMIC_AUG.yaml")
     config = load_config(config_path)
     train(config, serialize_final=True)
+

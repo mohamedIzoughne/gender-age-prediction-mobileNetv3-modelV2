@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from matplotlib.image import imread
 from IPython.display import display
 
-# Constants
+# Constants for default binning ranges
 DEFAULT_AGE_BINS = [0, 4, 14, 24, 30, 40, 50, 60, 70, 80, np.inf]
 DEFAULT_LUMINANCE_BINS = [0, 85, 105, 120, 135, 150, np.inf]
 DEFAULT_BRISQUE_BINS = [-np.inf, 25, 35, 45, 55, np.inf]
@@ -31,8 +31,10 @@ def create_column_bins_and_labels(bins):
     Returns:
         tuple: Bins and corresponding labels.
     """
-    labels = [f"{bins[i]}+" if np.isinf(bins[i + 1]) else f"{bins[i]}-{bins[i + 1]}"
-              for i in range(len(bins) - 1)]
+    labels = [
+        f"{bins[i]}+" if np.isinf(bins[i + 1]) else f"{bins[i]}-{bins[i + 1]}"
+        for i in range(len(bins) - 1)
+    ]
     return bins, labels
 
 
@@ -97,11 +99,16 @@ def calculate_binned_metrics(df, target_vars, vars_to_bin):
                 if bin_size == 0:
                     continue
 
+                gender_mean = df.loc[bin_mask, 'true_gender'].mean()
+                gender_std = df.loc[bin_mask, 'true_gender'].std()
+                age_mean = df.loc[bin_mask, 'true_age'].mean()
+                age_std = df.loc[bin_mask, 'true_age'].std()
+
                 metric = {
                     "bin": bin_name,
                     "sample_size": bin_size,
-                    "mean gender (std)": f"{df.loc[bin_mask, 'true_gender'].mean():.2f}({df.loc[bin_mask, 'true_gender'].std():.2f})",
-                    "mean age (std)": f"{df.loc[bin_mask, 'true_age'].mean():.2f}({df.loc[bin_mask, 'true_age'].std():.2f})",
+                    "mean gender (std)": f"{gender_mean:.2f}({gender_std:.2f})",
+                    "mean age (std)": f"{age_mean:.2f}({age_std:.2f})",
                 }
 
                 if is_classifier:

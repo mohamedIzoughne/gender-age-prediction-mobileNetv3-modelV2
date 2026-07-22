@@ -4,7 +4,7 @@
 sweep_prefix: "default"
 method: bayes
 metric:
-  name: val_total_loss
+  name: train_total_loss
   goal: minimize
 
 parameters:

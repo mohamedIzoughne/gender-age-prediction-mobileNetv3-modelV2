@@ -2,7 +2,7 @@ sweep_prefix: "one_cycle_transforms_fixed"
 
 method: grid
 metric:
-  name: val_total_loss
+  name: train_total_loss
   goal: minimize
 
 parameters:

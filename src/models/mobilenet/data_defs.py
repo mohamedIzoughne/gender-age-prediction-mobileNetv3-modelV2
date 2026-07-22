@@ -309,8 +309,8 @@ class AgeGenderDataModule(pl.LightningDataModule):
             transform_list = []
             transform_configs = get_transforms_configs()
 
-            for config_key, transform in transform_configs:
-                if self.config.get(config_key, False):
+            for config_name_key, transform in transform_configs:
+                if self.config.get(config_name_key, False):
                     print(f"+{transform.__class__.__name__}")
                     transform_list.append(transform)
 
@@ -449,4 +449,3 @@ class AgeGenderDataModule(pl.LightningDataModule):
         genders = torch.tensor(genders)
         is_augmented = torch.tensor(is_augmented, dtype=torch.bool)
         return images, ages, genders, is_augmented, image_paths
-

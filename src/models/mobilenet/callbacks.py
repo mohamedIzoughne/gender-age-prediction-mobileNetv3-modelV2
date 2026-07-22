@@ -1,8 +1,16 @@
+"""
+Custom PyTorch Lightning callbacks for training monitoring and logging.
+"""
+
 import torch
 from pytorch_lightning import Callback
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
+
 class EarlyStoppingCB(EarlyStopping):
+    """
+    Early stopping callback that logs when training terminates early or finishes normally.
+    """
     def on_train_end(self, trainer, pl_module):
         if self.stopped_epoch > 0:
             print(f"Early stopping triggered at epoch {self.stopped_epoch}")
@@ -12,10 +20,11 @@ class EarlyStoppingCB(EarlyStopping):
 
 class BestMetricsCallback(Callback):
     """
-    Recording best metric over full run
+    Logs the best performance metrics recorded over the entire training run.
     """
 
     def __init__(self):
+        super().__init__()
         self.best_metrics = {}
 
     def on_validation_epoch_end(self, trainer, pl_module):
@@ -33,6 +42,9 @@ class BestMetricsCallback(Callback):
 
 
 class LRMonitorCallback(Callback):
+    """
+    Monitors learning rate and validation loss at the end of each validation epoch.
+    """
     def on_validation_epoch_end(self, trainer, pl_module):
         current_lr = pl_module.get_current_lr()
         val_loss = trainer.callback_metrics.get("val_total_loss")
@@ -43,3 +55,4 @@ class LRMonitorCallback(Callback):
         pl_module.log(
             "callback_epoch_LR", current_lr, on_step=False, on_epoch=True, prog_bar=True
         )
+

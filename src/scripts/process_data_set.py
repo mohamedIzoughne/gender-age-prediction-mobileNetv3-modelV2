@@ -27,12 +27,19 @@ def download_dataset():
 
 
 def verify_and_clean_images(path):
+    """
+    Scan all files in the given path, attempt to load them as RGB images, and delete any corrupt files.
+
+    Args:
+        path (str or Path): Target directory path to clean.
+
+    Returns:
+        list: List of Path objects for broken/corrupt files that were removed.
+    """
     path = Path(path)
     broken_files = []
 
-    x = 0
     for img_path in path.rglob("*.*"):
-        x += 1
         try:
             img = Image.open(img_path)
             img.convert("RGB")
@@ -47,10 +54,18 @@ def verify_and_clean_images(path):
 
 
 def analyze_images(path):
-    path = Path(path)
+    """
+    Analyze image sizes, formats, and ICC profiles in a directory.
+
+    Args:
+        path (str or Path): Target directory.
+
+    Returns:
+        Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: DataFrames of ICC profile presence counts,
+        dimensions counts, and file format counts.
+    """
     path = Path(path)
     metrics = {"icc_profile_present": [], "dimensions": [], "file_format": []}
-    broken_files = []
     for img_path in path.rglob("*.*"):
         try:
             with Image.open(img_path) as img:
@@ -258,34 +273,5 @@ def verify_dataset(output_dir):
     return df
 
 
-def download_ds(path):
-    def download_dataset():
-        subprocess.run(
-            [
-                "kaggle",
-                "datasets",
-                "download",
-                "-d",
-                "maysee/mushrooms-classification-common-genuss-images",
-            ],
-            check=True,
-        )
-
-    # TODO: REMOVE THIS AND MOVE TO ENV FILE
-    os.environ["KAGGLE_USERNAME"] = "fdsfdssfd"
-    os.environ["KAGGLE_KEY"] = "01ae24651b00fa183e6b84bf135d8d84"
-
-    DS_ZIP_FILE = "mushrooms-classification-common-genuss-images.zip"
-
-    download_dataset()
-
-    with zipfile.ZipFile(DS_ZIP_FILE, "r") as zip_ref:
-        zip_ref.extractall(path)
-
-    dup_path = os.path.join(os.path.join(path, "Mushrooms"), "Mushrooms")
-    if os.path.exists(dup_path):
-        shutil.rmtree(dup_path)
 
 
-if __name__ == "__main__":
-    download_ds(TEMP_DATASET_NAME)

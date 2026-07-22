@@ -58,3 +58,55 @@ Age is treated as a continuous regression problem using `L1Loss` (Mean Absolute 
 ### **C. Transfer Learning & Staged Unfreezing**
 - The MobileNetV3 base is initialized with pre-trained ImageNet weights (`pretrained=True`), starting the model with a strong foundational understanding of edges, textures, and shapes.
 - **`freeze_epochs`:** The base model can be temporarily frozen at the start of training. This allows the newly initialized random weights in the Age and Gender heads to "warm up" without corrupting the valuable pre-trained features of the base model via massive backpropagation gradients.
+
+---
+
+## 4. End-to-End Project Execution Flow (Deep Technical Breakdown)
+
+Understanding the sequence of operations is key to navigating the codebase. Here is the step-by-step flow from raw data to a fully trained and evaluated model, detailing the exact mathematical and programmatic steps.
+
+### **Phase 1: Data Preparation & Cleaning** (`src/scripts/process_data_set.py`)
+Before training begins, raw datasets (like UTKFace) must be cleaned and structured.
+1. **Validation & Repair:** The `verify_and_clean_images` function opens every image using `Image.open(img_path)`. It attempts a `.convert("RGB")` and a `.resize((224, 224))`. Any image that throws a `PIL.UnidentifiedImageError` or `IOError` is physically deleted via `img_path.unlink()` and recorded in `broken_files`.
+2. **Deduplication:** To prevent data leakage, `find_duplicates` runs across a multiprocessing pool (`Pool(processes=cpu_count())`). It converts images to RGB and generates an 8x8 hash using `imagehash.dhash(img, 8)`. If `hash_val` matches an existing entry in the `hash_dict`, the image is deemed a duplicate and unlinked.
+3. **Stratified Splitting:** `stratified_split` iterates through the cleaned dataset, categorizing by the folder structure. It utilizes `sklearn.model_selection.train_test_split` with `test_size=0.12`, maintaining the exact `stratify=categories` parameter, and saves files into explicit `train` and `test` directories using `shutil.copy`.
+
+### **Phase 2: Dataset Construction & On-the-Fly Balancing** (`src/models/MobileNet/data_defs.py`)
+The `AgeGenderDataModule` (PyTorch Lightning) handles feeding data to the model.
+1. **Parsing & Memory Loading:** Inside `AgeGenderDataset.__init__`, image names (e.g., `25_1_...`) are split by underscores: `age = int(splits[0])` and `gender = int(splits[1])`. The paths, ages, and genders are loaded into parallel lists in memory.
+2. **Binning & Distribution Analysis:** The `calculate_age_bins` function executes a mathematical mapping: `bin_idx = min(age // 10, num_bins - 1)`. With `num_bins=9`, this creates decades (0-9, 10-19, up to 80+). It stores the raw indices belonging to each bin and tabulates `bin_frequencies`.
+3. **Synthetic Duplication (The Math):** If `use_dynamic_augmentation=True`, `create_augmented_indices` calculates the maximum frequency (`max_freq = max(self.bin_frequencies)`). For every under-represented bin, it calculates the number of synthetic samples to inject: 
+   `num_to_add = int(int((max_freq - len(indices)) * mult) + max_freq * 0.1)` 
+   *(Note the 10% structural boost past max frequency)*. It then generates virtual indices mapping back to the original index `orig_idx` but flagged as a duplicate.
+4. **Data Loader Flagging (`__getitem__`):** During iteration, the dataset checks if the requested `idx < len(self.valid_images)`. If true, it loads the original and sets `is_augmented = False`. If false, it maps to `orig_idx` from the synthetic list and sets `is_augmented = True`. At this stage on the CPU, only `transforms.Resize((224, 224))` and `transforms.Normalize` (to ImageNet standards) are executed.
+
+### **Phase 3: Model Initialization** (`src/models/MobileNet/classifier.py`)
+The architecture is dynamically constructed inside `AgeGenderClassifier._initialize_model`.
+1. **Base Extraction:** The backbone (e.g., `models.mobilenet_v3_large(pretrained=True)`) is loaded. To remove the 1000-class ImageNet head, it executes:
+   `self.base_model = nn.Sequential(*list(self.base_model.children())[:-1])`
+2. **Pooling:** An `nn.AdaptiveAvgPool2d(1)` is added to squash the spatial dimensions into a 1D tensor.
+3. **Dual Heads:** Two distinct modules are attached, incorporating configurable `nn.Dropout(p=dropout_rate)`:
+   - `self.gender_classifier = nn.Linear(num_features, 2)`
+   - `self.age_regressor = nn.Linear(num_features, 1)`
+4. **Freezing Logic:** If `config["freeze_epochs"] > 0`, the loop `for param in self.base_model.parameters(): param.requires_grad = False` executes, locking the backbone gradients.
+
+### **Phase 4: The Training Loop** (`src/models/MobileNet/runner_scripts/trainer.py` & `classifier.py`)
+The core training leverages PyTorch Lightning's optimization strategies.
+1. **GPU Batch Transfer:** A batch (images, ages, genders, and boolean `is_augmented` tensor) is pushed to the GPU.
+2. **GPU-Accelerated Augmentation:** Inside the `on_after_batch_transfer` hook, the exact code `if self.dynamic_augment_transform is not None and is_augmented.any():` triggers. It executes a heavy `v2.Compose` (ColorJitter, Sharpness(p=0.2), RandomErasing(value=0, scale=(0.02, 0.33))) directly on the boolean-sliced tensor: `x[is_augmented] = augmented_x`. This is a massive optimization preventing CPU dataloader bottlenecks.
+3. **Forward Pass:** The batched tensor traverses `self.base_model`, is flattened by `.view(x.size(0), -1)`, and splits into `gender_output` and `age_output.squeeze(1)`.
+4. **Loss Computation:** 
+   - `gender_loss = nn.CrossEntropyLoss()(gender_pred, gender)`
+   - `age_loss = nn.L1Loss()(age_pred, age.float())`
+   - **Merge:** `total_loss = (weight * gender_loss) + ((1 - weight) * age_loss)`
+   - **L1 Penalty:** If `l1_lambda > 0`, `p.abs().sum()` across the parameters of the dual heads is added to the loss to enforce sparsity.
+5. **Scheduler Step:** `OneCycleWithDecay` executes. Once the primary OneCycle policy finishes, the custom `step()` method kicks in: `new_lr = g_lr * 1.0055`, artificially forcing a ~0.5% decay per step until the floor of `0.001` is hit.
+6. **Unfreezing Hook:** At the start of an epoch (`on_train_epoch_start`), `check_unfreeze_base_model` fires. If `current_epoch == freeze_epochs`, it sets `param.requires_grad = True` across the backbone.
+
+### **Phase 5: Evaluation & Metrics** (`src/models/MobileNet/metrics.py`)
+After training, `metrics.evaluate_predictions` parses the raw model outputs.
+1. **Probability Conversion:** Gender logits are pushed through `F.softmax(gender_logits, dim=1)`, extracting the probability for the positive class (e.g., Male).
+2. **Binned Metrics Analysis:** `bin_column` groups true ages using `DEFAULT_AGE_BINS = [0, 4, 14, 24, 30, 40, 50, ... 80, np.inf]`. It calculates accuracy mathematically `true_genders == gender_pred_labels` for every specific bin, outputting highly granular statistics.
+3. **Advanced Scoring:** 
+   - Uses `roc_auc_score` and `average_precision_score` for gender bounds.
+   - Computes `MAPE` (Mean Absolute Percentage Error) for age: `np.mean(np.abs((true_ages - age_preds) / true_ages)) * 100`, determining exactly how far off the age guess is relative to the person's true lifespan.
