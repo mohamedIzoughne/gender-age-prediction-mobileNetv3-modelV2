@@ -146,7 +146,9 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
     callbacks.append(checkpoint_callback)
     
     class BestModelCheckpoint(ModelCheckpoint):
-        pass
+        @property
+        def state_key(self) -> str:
+            return "BestModelCheckpoint"
 
     best_checkpoint_callback = BestModelCheckpoint(
         dirpath=ckpt_dir,
