@@ -6,8 +6,9 @@ num_aug_bins: 9
 
 model_type: "mobilenet_v3_large"
 
-val_path: "dataset/test_2_folds_last"
-train_path: "dataset/train_8_folds_first"
+# val_path: "dataset/test_2_folds_last"
+# train_path: "dataset/train_8_folds_first"
+ds_path: "/content/data/UTKFace/UTKFace"
 
 num_epochs: 18
 batch_size: 256

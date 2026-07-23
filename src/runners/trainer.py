@@ -144,6 +144,17 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
         save_last=True
     )
     callbacks.append(checkpoint_callback)
+    
+    best_checkpoint_callback = ModelCheckpoint(
+        dirpath=ckpt_dir,
+        filename=run_name + "-best-{epoch:02d}-{val_total_loss:.4f}",
+        save_top_k=1, # Save the absolute best epoch
+        monitor="val_total_loss",
+        mode="min",
+        save_last=False
+    )
+    callbacks.append(best_checkpoint_callback)
+    
     callbacks.append(MetricsCSVCallback(filepath=metrics_csv_path))
 
     trainer = pl.Trainer(

@@ -6,8 +6,10 @@ num_aug_bins: 9
 
 model_type: "efficientnet_b0"
 
-val_path: "dataset/test_2_folds_last"
-train_path: "dataset/train_8_folds_first"
+# val_path: "/content/data/UTKFace/test_2_folds_last"
+# train_path: "/content/data/UTKFace/train_8_folds_first"
+ds_path: "/content/data/UTKFace/UTKFace"
+
 
 num_epochs: 26
 batch_size: 256
