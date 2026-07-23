@@ -236,6 +236,11 @@ class AgeGenderClassifier(pl.LightningModule):
         train_gender_acc = self.train_gender_accuracy(
             torch.argmax(gender_pred, dim=1), gender
         )
+        train_age_mae = self.age_mae(age_pred, age.float())
+
+        self.log(
+            "train_age_mae", train_age_mae, on_step=False, on_epoch=True, prog_bar=True
+        )
 
         self.log(
             "train_gender_loss",

@@ -13,10 +13,67 @@ if project_root not in sys.path:
 
 import torch
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import Timer, ModelCheckpoint, TQDMProgressBar
+from pytorch_lightning.callbacks import Timer, ModelCheckpoint, TQDMProgressBar, Callback
 from pytorch_lightning.loggers import TensorBoardLogger
 from typing import Dict, Any
 import yaml
+import csv
+from datetime import datetime
+
+class MetricsCSVCallback(Callback):
+    def __init__(self, filepath):
+        super().__init__()
+        self.filepath = filepath
+        self.file = None
+        self.writer = None
+        
+    def on_train_start(self, trainer, pl_module):
+        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
+        file_exists = os.path.exists(self.filepath)
+        self.file = open(self.filepath, 'a', newline='')
+        self.writer = csv.writer(self.file)
+        if not file_exists or os.path.getsize(self.filepath) == 0:
+            self.writer.writerow(['epoch', 'stage', 'train_loss', 'val_loss', 'train_age_mae', 'val_age_mae', 'train_gender_acc', 'val_gender_acc', 'lr', 'timestamp'])
+            
+    def on_train_epoch_end(self, trainer, pl_module):
+        self._log_epoch(trainer, 'train')
+        
+    def on_validation_epoch_end(self, trainer, pl_module):
+        if not trainer.sanity_checking:
+            self._log_epoch(trainer, 'val')
+            
+    def _log_epoch(self, trainer, stage):
+        metrics = trainer.callback_metrics
+        if not metrics:
+            return
+            
+        epoch = trainer.current_epoch
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        def get_metric(name):
+            val = metrics.get(name, "")
+            if isinstance(val, torch.Tensor):
+                return f"{val.item():.4f}"
+            if isinstance(val, float):
+                return f"{val:.4f}"
+            return val
+            
+        train_loss = get_metric('train_total_loss')
+        val_loss = get_metric('val_total_loss')
+        train_age_mae = get_metric('train_age_mae')
+        val_age_mae = get_metric('val_age_mae')
+        train_gender_acc = get_metric('train_gender_acc')
+        val_gender_acc = get_metric('val_gender_acc')
+        lr = ""
+        if trainer.optimizers and len(trainer.optimizers[0].param_groups) > 0:
+            lr = f"{trainer.optimizers[0].param_groups[0]['lr']:.6f}"
+        
+        self.writer.writerow([epoch, stage, train_loss, val_loss, train_age_mae, val_age_mae, train_gender_acc, val_gender_acc, lr, timestamp])
+        self.file.flush()
+        
+    def on_train_end(self, trainer, pl_module):
+        if self.file:
+            self.file.close()
 
 from src.models.mobilenet.callbacks import (
     EarlyStoppingCB,
@@ -65,21 +122,29 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
         TQDMProgressBar(refresh_rate=50),
     ]
 
+    model_type = config.get("model_type", "mobilenet_v3")
+    is_aug = "aug" if config.get("use_dynamic_augmentation", False) else "no_aug"
+    run_name = f"{model_type}_{is_aug}"
+
     if os.path.exists("/content/"):
         if not os.path.exists("/content/drive/MyDrive/"):
             raise FileNotFoundError("Google Drive is not mounted! Please mount it to save checkpoints before running.")
-        ckpt_dir = "/content/drive/MyDrive/AgeGenderCheckpoints/"
+        ckpt_dir = f"/content/drive/MyDrive/AgeGenderCheckpoints/{run_name}/"
+        metrics_csv_path = f"/content/drive/MyDrive/AgeGenderMetrics/{run_name}_metrics.csv"
     else:
-        ckpt_dir = "checkpoints/"
+        ckpt_dir = f"checkpoints/{run_name}/"
+        metrics_csv_path = f"logs/{run_name}_metrics.csv"
+        
     checkpoint_callback = ModelCheckpoint(
         dirpath=ckpt_dir,
-        filename="mobilenet-{epoch:02d}-{val_total_loss:.4f}",
-        save_top_k=3,
+        filename=run_name + "-{epoch:02d}-{val_total_loss:.4f}",
+        save_top_k=-1, # Save every epoch
         monitor="val_total_loss",
         mode="min",
         save_last=True
     )
     callbacks.append(checkpoint_callback)
+    callbacks.append(MetricsCSVCallback(filepath=metrics_csv_path))
 
     trainer = pl.Trainer(
         max_epochs=config["num_epochs"],
@@ -168,7 +233,7 @@ def load_model(path: str = "model_checkpoint.pth") -> AgeGenderClassifier:
 
 
 if __name__ == "__main__":
-    config_path = os.path.join(project_root, "config/model/swept-sweep-34_improved_DYNAMIC_AUG.yaml")
+    config_path = os.path.join(project_root, "config/model/my-configs/mobilenet_v3_large_aug.yaml")
     config = load_config(config_path)
     train(config, serialize_final=True)
 

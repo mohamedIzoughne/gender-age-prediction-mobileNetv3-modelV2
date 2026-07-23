@@ -1,0 +1,45 @@
+prefix: "efficientnet_b0_aug"
+
+use_dynamic_augmentation: True
+dynamic_augmentation_mult: 0.3
+num_aug_bins: 9
+
+model_type: "efficientnet_b0"
+
+val_path: "dataset/test_2_folds_last"
+train_path: "dataset/train_8_folds_first"
+
+num_epochs: 26
+batch_size: 256
+freeze_epochs: 0
+gender_loss_weight: 0.8
+
+# Optimizer params
+base_lr: 0.00015
+weight_decay: 0.0005
+
+# Regularization params
+dropout: 0.35
+l1_lambda: 0.0001
+
+# Scheduler specific params
+lr_scheduler: "one_cycle"
+max_lr: 0.0032
+anneal_strategy: "cos"
+pct_start: 0.20
+div_factor: 25
+final_div_factor: 10000
+
+override_cycle_epoch_count: 26
+
+# Transform params
+include_center_crop: False
+include_color_jitter: true
+include_gaussian_blur: false
+include_gaussian_noise: false
+include_random_affine: true
+include_random_erasing: true
+include_random_grayscale: true
+include_random_horizontal_flip: false
+include_random_perspective: true
+include_random_rotation: true
