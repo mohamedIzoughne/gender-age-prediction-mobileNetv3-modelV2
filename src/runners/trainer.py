@@ -145,21 +145,6 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
     )
     callbacks.append(checkpoint_callback)
     
-    class BestModelCheckpoint(ModelCheckpoint):
-        @property
-        def state_key(self) -> str:
-            return "BestModelCheckpoint"
-
-    best_checkpoint_callback = BestModelCheckpoint(
-        dirpath=ckpt_dir,
-        filename=run_name + "-best-{epoch:02d}-{val_total_loss:.4f}",
-        save_top_k=1, # Save the absolute best epoch
-        monitor="val_total_loss",
-        mode="min",
-        save_last=False
-    )
-    callbacks.append(best_checkpoint_callback)
-    
     callbacks.append(MetricsCSVCallback(filepath=metrics_csv_path))
 
     trainer = pl.Trainer(
@@ -183,6 +168,11 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
     if serialize_final:
         best_model_path = checkpoint_callback.best_model_path
         if best_model_path and os.path.exists(best_model_path):
+            import shutil
+            best_ckpt_dest = os.path.join(ckpt_dir, f"{run_name}-best.ckpt")
+            shutil.copy2(best_model_path, best_ckpt_dest)
+            print(f"Copied best PyTorch Lightning checkpoint to {best_ckpt_dest}")
+
             print(f"Loading best model from {best_model_path} for final serialization...")
             checkpoint = torch.load(best_model_path)
             model.load_state_dict(checkpoint['state_dict'])
