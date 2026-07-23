@@ -145,7 +145,10 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
     )
     callbacks.append(checkpoint_callback)
     
-    best_checkpoint_callback = ModelCheckpoint(
+    class BestModelCheckpoint(ModelCheckpoint):
+        pass
+
+    best_checkpoint_callback = BestModelCheckpoint(
         dirpath=ckpt_dir,
         filename=run_name + "-best-{epoch:02d}-{val_total_loss:.4f}",
         save_top_k=1, # Save the absolute best epoch
