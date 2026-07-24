@@ -4,8 +4,7 @@ use_dynamic_augmentation: False
 
 model_type: "mobilenet_v3_large"
 
-val_path: "dataset/test_2_folds_last"
-train_path: "dataset/train_8_folds_first"
+ds_path: "/content/data/UTKFace/UTKFace"
 
 num_epochs: 24
 batch_size: 256

@@ -4,10 +4,10 @@ use_dynamic_augmentation: False
 
 model_type: "efficientnet_b0"
 
-val_path: "dataset/test_2_folds_last"
-train_path: "dataset/train_8_folds_first"
-
+ds_path: "/content/data/UTKFace/UTKFace"
 num_epochs: 26
+
+
 batch_size: 256
 freeze_epochs: 0
 gender_loss_weight: 0.8
