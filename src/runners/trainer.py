@@ -31,6 +31,31 @@ class MetricsCSVCallback(Callback):
     def on_train_start(self, trainer, pl_module):
         os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
         file_exists = os.path.exists(self.filepath)
+        
+        if file_exists and os.path.getsize(self.filepath) > 0:
+            try:
+                with open(self.filepath, 'r', newline='') as f:
+                    reader = csv.reader(f)
+                    header = next(reader, None)
+                    rows = []
+                    for row in reader:
+                        try:
+                            # Keep rows where epoch < trainer.current_epoch
+                            if int(row[0]) < trainer.current_epoch:
+                                rows.append(row)
+                        except ValueError:
+                            # E.g., if epoch isn't an integer, just skip or keep depending on logic.
+                            # It's safer to keep non-integer rows just in case, though ideally there shouldn't be any.
+                            pass
+                
+                with open(self.filepath, 'w', newline='') as f:
+                    writer = csv.writer(f)
+                    if header:
+                        writer.writerow(header)
+                    writer.writerows(rows)
+            except Exception as e:
+                print(f"Warning: Failed to clean up CSV before appending: {e}")
+                
         self.file = open(self.filepath, 'a', newline='')
         self.writer = csv.writer(self.file)
         if not file_exists or os.path.getsize(self.filepath) == 0:
