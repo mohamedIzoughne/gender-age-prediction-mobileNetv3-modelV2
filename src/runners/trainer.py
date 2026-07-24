@@ -79,9 +79,9 @@ class MetricsCSVCallback(Callback):
         def get_metric(name):
             val = metrics.get(name, "")
             if isinstance(val, torch.Tensor):
-                return f"{val.item():.4f}"
+                return str(val.item())
             if isinstance(val, float):
-                return f"{val:.4f}"
+                return str(val)
             return val
             
         train_loss = get_metric('train_total_loss')
@@ -92,7 +92,7 @@ class MetricsCSVCallback(Callback):
         val_gender_acc = get_metric('val_gender_acc')
         lr = ""
         if trainer.optimizers and len(trainer.optimizers[0].param_groups) > 0:
-            lr = f"{trainer.optimizers[0].param_groups[0]['lr']:.6f}"
+            lr = str(trainer.optimizers[0].param_groups[0]['lr'])
         
         self.writer.writerow([epoch, stage, train_loss, val_loss, train_age_mae, val_age_mae, train_gender_acc, val_gender_acc, lr, timestamp])
         self.file.flush()
