@@ -88,7 +88,7 @@ class AgeGenderDataset(Dataset):
             transforms_list = [transform for _, transform in augmentation_configs]
             self.dynamic_augment_transform = transforms.Compose(transforms_list)
 
-        self.image_files = [f for f in os.listdir(root_dir) if f.endswith(".jpg")]
+        self.image_files = sorted([f for f in os.listdir(root_dir) if f.endswith(".jpg")])
         self.valid_images: List[str] = []
         self.ages: List[int] = []
         self.genders: List[int] = []

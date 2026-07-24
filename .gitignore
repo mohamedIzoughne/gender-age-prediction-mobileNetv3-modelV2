@@ -221,7 +221,6 @@ cython_debug/
 EDA_Ideas
 
 old_workbench/
-<<<<<<< HEAD
 old_workbench
 
 export/
@@ -266,4 +265,5 @@ home-credit-default-risk/
 .production_models
 =======
 old_workbench
->>>>>>> 12669a7e7f3c114493c29041d80389b0c83d85a3
+
+*.jpg

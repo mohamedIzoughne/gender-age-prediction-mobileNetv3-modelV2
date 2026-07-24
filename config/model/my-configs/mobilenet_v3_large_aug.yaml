@@ -15,6 +15,7 @@ batch_size: 256
 freeze_epochs: 0
 gender_loss_weight: 0.8
 
+
 # Optimizer params
 base_lr: 0.0068893981577029285
 weight_decay: 0.00019323262043373016

@@ -5,6 +5,7 @@ Supports logging via TensorBoard and model checkpointing.
 
 import os
 import sys
+import argparse
 
 # Add the project root to sys.path to resolve 'src' module imports
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -110,6 +111,7 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
         serialize_final (bool): Whether to serialize model to model_store/ upon completion.
     """
     print(f"\n - - - \nConfig:\n{dict(config)}\n\n - - - \n")
+    pl.seed_everything(42, workers=True)
 
     data = create_dataloaders(config)
     model = AgeGenderClassifier(config)
@@ -239,7 +241,11 @@ def load_model(path: str = "model_checkpoint.pth") -> AgeGenderClassifier:
 
 
 if __name__ == "__main__":
-    config_path = os.path.join(project_root, "config/model/my-configs/mobilenet_v3_large_aug.yaml")
+    parser = argparse.ArgumentParser(description="Train Age & Gender Classifier")
+    parser.add_argument("--config", type=str, default="config/model/my-configs/mobilenet_v3_large_aug.yaml", help="Path to config file")
+    args = parser.parse_args()
+
+    config_path = os.path.join(project_root, args.config) if not os.path.isabs(args.config) else args.config
     config = load_config(config_path)
     train(config, serialize_final=True)
 
