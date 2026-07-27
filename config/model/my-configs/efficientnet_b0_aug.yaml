@@ -17,7 +17,7 @@ freeze_epochs: 0
 gender_loss_weight: 0.8
 
 # Optimizer params
-base_lr: 0.00015
+base_lr: 0.00004
 weight_decay: 0.0005
 
 # Regularization params
@@ -26,7 +26,7 @@ l1_lambda: 0.0001
 
 # Scheduler specific params
 lr_scheduler: "one_cycle"
-max_lr: 0.0032
+max_lr: 0.001
 anneal_strategy: "cos"
 pct_start: 0.20
 div_factor: 25
