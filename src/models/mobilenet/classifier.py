@@ -303,18 +303,15 @@ class AgeGenderClassifier(pl.LightningModule):
             weight_decay=self.get_param("weight_decay"),
         )
         if self.get_param("lr_scheduler") == "one_cycle":
-            # Calculate total steps based on override_cycle_epoch_count if available
+            # Calculate total steps based on estimated_stepping_batches
+            total_steps = self.trainer.estimated_stepping_batches
+            
             override_epochs = self.get_param("override_cycle_epoch_count", None)
-            if override_epochs is not None:
-                dataloader = self.trainer.datamodule.train_dataloader()
-                steps_per_epoch = len(dataloader)
-                total_steps = steps_per_epoch * override_epochs
-
-                print(
-                    f"override_cycle_epoch_count = {override_epochs} total_steps={total_steps} estimated real = {self.trainer.estimated_stepping_batches}"
-                )
-            else:
-                total_steps = self.trainer.estimated_stepping_batches
+            if override_epochs is not None and self.trainer.max_epochs is not None:
+                # Scale total_steps proportionally if override_cycle_epoch_count is set
+                ratio = override_epochs / self.trainer.max_epochs
+                total_steps = int(total_steps * ratio)
+                print(f"override_cycle_epoch_count = {override_epochs}, max_epochs={self.trainer.max_epochs}, scaled total_steps={total_steps}")
 
             scheduler = OneCycleWithDecay(
                 optimizer,

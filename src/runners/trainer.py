@@ -62,11 +62,11 @@ class MetricsCSVCallback(Callback):
             self.writer.writerow(['epoch', 'stage', 'train_loss', 'val_loss', 'train_age_mae', 'val_age_mae', 'train_gender_acc', 'val_gender_acc', 'lr', 'timestamp'])
             
     def on_train_epoch_end(self, trainer, pl_module):
-        self._log_epoch(trainer, 'train')
+        self._log_epoch(trainer, 'epoch_end')
         
     def on_validation_epoch_end(self, trainer, pl_module):
-        if not trainer.sanity_checking:
-            self._log_epoch(trainer, 'val')
+        # We handle logging for both train and val at the end of the training epoch.
+        pass
             
     def _log_epoch(self, trainer, stage):
         metrics = trainer.callback_metrics
@@ -79,10 +79,13 @@ class MetricsCSVCallback(Callback):
         def get_metric(name):
             val = metrics.get(name, "")
             if isinstance(val, torch.Tensor):
-                return str(val.item())
+                if val.numel() == 1:
+                    return str(val.item())
+                else:
+                    return str(val.tolist())
             if isinstance(val, float):
                 return str(val)
-            return val
+            return str(val) if val != "" else ""
             
         train_loss = get_metric('train_total_loss')
         val_loss = get_metric('val_total_loss')
