@@ -10,29 +10,29 @@ model_type: "mobilenet_v3_large"
 # train_path: "dataset/train_8_folds_first"
 ds_path: "/content/data/UTKFace/UTKFace"
 
-num_epochs: 18
+num_epochs: 24
 batch_size: 256
 freeze_epochs: 0
 gender_loss_weight: 0.8
 
 
 # Optimizer params
-base_lr: 0.0068893981577029285
-weight_decay: 0.00019323262043373016
+base_lr: 0.0002
+weight_decay: 0.00035
 
 # Regularization params
-dropout: 0.1
+dropout: 0.30
 l1_lambda: 0.0001
 
 # Scheduler specific params
 lr_scheduler: "one_cycle"
-max_lr: 0.012321315111072404 # 0.012321315111072404
+max_lr: 0.0048
 anneal_strategy: "cos"
-pct_start: 0.36685557351085574
-div_factor: 24
-final_div_factor: 2873
+pct_start: 0.22
+div_factor: 25
+final_div_factor: 10000
 
-override_cycle_epoch_count: 17
+override_cycle_epoch_count: 24
 
 # Transform params
 include_center_crop: False
