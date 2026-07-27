@@ -11,7 +11,7 @@ model_type: "efficientnet_b0"
 ds_path: "/content/data/UTKFace/UTKFace"
 
 
-num_epochs: 26
+num_epochs: 28
 batch_size: 256
 freeze_epochs: 0
 gender_loss_weight: 0.8
@@ -21,7 +21,7 @@ base_lr: 0.00015
 weight_decay: 0.0005
 
 # Regularization params
-dropout: 0.35
+dropout: 0.30
 l1_lambda: 0.0001
 
 # Scheduler specific params
@@ -32,16 +32,16 @@ pct_start: 0.20
 div_factor: 25
 final_div_factor: 10000
 
-override_cycle_epoch_count: 26
+override_cycle_epoch_count: 28
 
 # Transform params
 include_center_crop: False
 include_color_jitter: true
-include_gaussian_blur: false
-include_gaussian_noise: false
+include_gaussian_blur: true
+include_gaussian_noise: true
 include_random_affine: true
 include_random_erasing: true
 include_random_grayscale: true
-include_random_horizontal_flip: false
+include_random_horizontal_flip: true
 include_random_perspective: true
 include_random_rotation: true

@@ -21,7 +21,7 @@ base_lr: 0.0002
 weight_decay: 0.00035
 
 # Regularization params
-dropout: 0.30
+dropout: 0.25
 l1_lambda: 0.0001
 
 # Scheduler specific params
@@ -37,11 +37,11 @@ override_cycle_epoch_count: 24
 # Transform params
 include_center_crop: False
 include_color_jitter: true
-include_gaussian_blur: false
-include_gaussian_noise: false
+include_gaussian_blur: true
+include_gaussian_noise: true
 include_random_affine: true
 include_random_erasing: true
 include_random_grayscale: true
-include_random_horizontal_flip: false
+include_random_horizontal_flip: true
 include_random_perspective: true
 include_random_rotation: true
