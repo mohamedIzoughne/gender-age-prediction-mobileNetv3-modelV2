@@ -182,6 +182,7 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
         devices=1,
         precision="16-mixed",
         log_every_n_steps=50,
+        gradient_clip_val=1.0,
     )
 
     last_ckpt = os.path.join(ckpt_dir, "last.ckpt")
