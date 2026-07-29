@@ -38,7 +38,15 @@ def test(config, ckpt_path):
         devices=1,
     )
     
-    trainer.test(model, datamodule=data)
+    results = trainer.test(model, datamodule=data)
+    
+    print("\n" + "="*50)
+    print("FINAL TEST RESULTS:")
+    print("="*50)
+    if results:
+        for k, v in results[0].items():
+            print(f"{k}: {v:.4f}")
+    print("="*50 + "\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test Age & Gender Classifier")

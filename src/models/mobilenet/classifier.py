@@ -191,11 +191,48 @@ class AgeGenderClassifier(pl.LightningModule):
         x, age, gender, _ = batch
         gender_pred, age_pred = self(x)
 
+        gender_loss = self.gender_loss(gender_pred, gender)
+        age_loss = self.age_loss(age_pred, age.float())
+        
+        gender_acc = self.gender_accuracy(torch.argmax(gender_pred, dim=1), gender)
+        age_mae = self.age_mae(age_pred, age.float())
+        
+        AGE_CLASSES = [
+            {"id": 0, "label": "dependent_minor", "min_age": 0, "max_age": 17},
+            {"id": 1, "label": "young_aspirational", "min_age": 18, "max_age": 24},
+            {"id": 2, "label": "independent_professional", "min_age": 25, "max_age": 29},
+            {"id": 3, "label": "early_nesting", "min_age": 30, "max_age": 35},
+            {"id": 4, "label": "peak_earning_adult", "min_age": 36, "max_age": 45},
+            {"id": 5, "label": "mature_provider", "min_age": 46, "max_age": 55},
+            {"id": 6, "label": "pre_retirement", "min_age": 56, "max_age": 65},
+            {"id": 7, "label": "senior_consumer", "min_age": 66, "max_age": 120},
+        ]
+        
+        def get_age_class(ages):
+            class_ids = torch.zeros_like(ages, dtype=torch.long)
+            for cls in AGE_CLASSES:
+                mask = (ages >= cls["min_age"]) & (ages <= cls["max_age"])
+                class_ids[mask] = cls["id"]
+            return class_ids
+            
+        true_age_classes = get_age_class(age)
+        pred_age_classes = get_age_class(age_pred.round())
+        
+        age_class_acc = (pred_age_classes == true_age_classes).float().mean()
+
+        self.log("test_gender_loss", gender_loss, prog_bar=True)
+        self.log("test_age_loss", age_loss, prog_bar=True)
+        self.log("test_gender_acc", gender_acc, prog_bar=True)
+        self.log("test_age_mae", age_mae, prog_bar=True)
+        self.log("test_age_class_acc", age_class_acc, prog_bar=True)
+
         return {
             "gender_pred": gender_pred,
             "age_pred": age_pred,
             "true_gender": gender,
             "true_age": age,
+            "pred_age_class": pred_age_classes,
+            "true_age_class": true_age_classes,
         }
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
