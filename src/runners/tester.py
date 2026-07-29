@@ -15,7 +15,9 @@ from src.models.mobilenet.classifier import AgeGenderClassifier
 
 def load_pth_model(path: str, config: dict) -> AgeGenderClassifier:
     checkpoint = torch.load(path)
-    model = AgeGenderClassifier(config)
+    # Use the config stored in the checkpoint if available, as it has the correct model_type
+    ckpt_config = checkpoint.get("config", config)
+    model = AgeGenderClassifier(ckpt_config)
     model.load_state_dict(checkpoint["model_state_dict"])
     return model
 
