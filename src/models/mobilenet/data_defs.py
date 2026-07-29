@@ -88,12 +88,17 @@ class AgeGenderDataset(Dataset):
             transforms_list = [transform for _, transform in augmentation_configs]
             self.dynamic_augment_transform = transforms.Compose(transforms_list)
 
+        if not os.path.isdir(root_dir):
+            raise ValueError(f"Dataset root directory does not exist: {root_dir}")
+
         self.image_files = sorted([f for f in os.listdir(root_dir) if f.endswith(".jpg")])
         self.valid_images: List[str] = []
         self.ages: List[int] = []
         self.genders: List[int] = []
 
         print(f"Sample images found: {len(self.image_files)}")
+        if len(self.image_files) == 0:
+            raise ValueError(f"No .jpg images found in dataset directory: {root_dir}. Please make sure the data path is correct and files are extracted.")
 
         for img_name in self.image_files:
             img_path = os.path.join(root_dir, img_name)
@@ -114,6 +119,9 @@ class AgeGenderDataset(Dataset):
             self.valid_images = [self.valid_images[i] for i in indices]
             self.ages = [self.ages[i] for i in indices]
             self.genders = [self.genders[i] for i in indices]
+
+        if not self.ages:
+            raise ValueError("No valid age labels could be extracted from the dataset images.")
 
         self.bins, self.bin_frequencies = self.calculate_age_bins(self.ages)
         self.log_distribution("Initial")
