@@ -198,14 +198,14 @@ class AgeGenderClassifier(pl.LightningModule):
         age_mae = self.age_mae(age_pred, age.float())
         
         AGE_CLASSES = [
-            {"id": 0, "label": "dependent_minor", "min_age": 0, "max_age": 17},
-            {"id": 1, "label": "young_aspirational", "min_age": 18, "max_age": 24},
-            {"id": 2, "label": "independent_professional", "min_age": 25, "max_age": 29},
-            {"id": 3, "label": "early_nesting", "min_age": 30, "max_age": 35},
-            {"id": 4, "label": "peak_earning_adult", "min_age": 36, "max_age": 45},
-            {"id": 5, "label": "mature_provider", "min_age": 46, "max_age": 55},
-            {"id": 6, "label": "pre_retirement", "min_age": 56, "max_age": 65},
-            {"id": 7, "label": "senior_consumer", "min_age": 66, "max_age": 120},
+            {"id": 0, "label": "dependent_minor", "min_age": 0, "max_age": 15},
+            {"id": 1, "label": "young_aspirational", "min_age": 16, "max_age": 25},
+            {"id": 2, "label": "independent_professional", "min_age": 26, "max_age": 35},
+            {"id": 3, "label": "early_nesting", "min_age": 36, "max_age": 45},
+            {"id": 4, "label": "peak_earning_adult", "min_age": 46, "max_age": 60},
+            {"id": 5, "label": "mature_provider", "min_age": 60, "max_age": 100},
+            # {"id": 6, "label": "pre_retirement", "min_age": 56, "max_age": 65},
+            # {"id": 7, "label": "senior_consumer", "min_age": 66, "max_age": 120},
         ]
         
         def get_age_class(ages):
