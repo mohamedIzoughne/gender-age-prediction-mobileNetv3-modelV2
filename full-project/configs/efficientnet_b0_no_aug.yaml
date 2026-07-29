@@ -1,0 +1,43 @@
+prefix: "efficientnet_b0_no_aug"
+
+use_dynamic_augmentation: False
+
+model_type: "efficientnet_b0"
+
+ds_path: "/content/data/UTKFace/UTKFace"
+num_epochs: 22
+
+
+batch_size: 256
+freeze_epochs: 0
+gender_loss_weight: 0.8
+
+# Optimizer params
+base_lr: 0.00004
+weight_decay: 0.0005
+
+# Regularization params
+dropout: 0.35
+l1_lambda: 0.0001
+
+# Scheduler specific params
+lr_scheduler: "one_cycle"
+max_lr: 0.001
+anneal_strategy: "cos"
+pct_start: 0.20
+div_factor: 25
+final_div_factor: 10000
+
+override_cycle_epoch_count: 22
+
+# Transform params
+include_center_crop: True
+include_color_jitter: false
+include_gaussian_blur: false
+include_gaussian_noise: false
+include_random_affine: false
+include_random_erasing: false
+include_random_grayscale: false
+include_random_horizontal_flip: false
+include_random_perspective: false
+include_random_rotation: false

@@ -22,6 +22,8 @@ def plot_metrics(csv_path: str):
 
     # Clean the dataframe: merge the train and val rows per epoch
     df_clean = df.groupby('epoch').apply(lambda x: x.bfill().ffill().iloc[0]).reset_index(drop=True)
+    # The groupby puts 'epoch' in the index. We need to add it back as a column.
+    df_clean['epoch'] = df_clean.index
     if 'stage' in df_clean.columns:
         df_clean = df_clean.drop(columns=['stage'])
 
@@ -39,12 +41,6 @@ def plot_metrics(csv_path: str):
     plot_path = "loss_plot.png"
     plt.savefig(plot_path)
     print(f"Plot saved successfully to {plot_path}")
-    
-    # If running interactively, this will show the plot
-    try:
-        plt.show()
-    except Exception:
-        pass
 
 
 def predict_image(image_path: str, checkpoint_name: str):
@@ -77,7 +73,7 @@ def predict_image(image_path: str, checkpoint_name: str):
     print(f"Running inference on {image_path}...")
     # Inference
     with torch.no_grad():
-        age_pred, gender_logits = model(img_tensor)
+        gender_logits, age_pred = model(img_tensor)
         
         # Process outputs
         age = age_pred.item()
@@ -97,10 +93,10 @@ def predict_image(image_path: str, checkpoint_name: str):
 if __name__ == "__main__":
     # 1. Update this to your actual metrics CSV
     csv_file = "mobilenet_v3_large_aug_metrics.csv"
-    plot_metrics(csv_file)
+    # plot_metrics(csv_file)
 
     # 2. Update these to your actual model and test image
-    checkpoint_file = "mobilenet_v3_large_aug_best.pth" # Needs to be inside model_store/
-    test_image = "dataset/sample_image.jpg"
+    checkpoint_file = "ag_classifier_main_mobilenet_v3_large_aug_epoch25_loss1.1129.pth" # Needs to be inside model_store/
+    test_image = "test-images/face14.jpg"
     
-    # predict_image(test_image, checkpoint_file)
+    predict_image(test_image, checkpoint_file)
