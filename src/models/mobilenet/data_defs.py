@@ -301,10 +301,46 @@ class AgeGenderDataModule(pl.LightningDataModule):
         val_transforms = base_transforms_pre + base_transforms_post
         val_transform = TrackingCompose(val_transforms, "val")
 
-        if self.mode == "test":
-            self.test_dataset = AgeGenderDataset(
-                self.config["ds_path"], transform=val_transform
+        use_dynamic_augmentation = self.config.get("use_dynamic_augmentation", False)
+        num_aug_bins = self.config.get("num_aug_bins", False)
+        
+        has_explicit_paths = self.config.get("train_path") and self.config.get("val_path")
+
+        train_indices, val_indices, test_indices = None, None, None
+        if not has_explicit_paths:
+            temp_dataset = AgeGenderDataset(
+                self.config["ds_path"],
+                transform=None,
+                use_dynamic_augmentation=False,
             )
+            print(f"Gender Distribution:\n{temp_dataset.gender_distribution()}")
+            print(f"Age Distribution:\n{temp_dataset.age_distribution()}")
+            
+            train_size = int(0.8 * len(temp_dataset))
+            val_size = int(0.1 * len(temp_dataset))
+            test_size = len(temp_dataset) - train_size - val_size
+
+            train_indices, val_indices, test_indices = torch.utils.data.random_split(
+                range(len(temp_dataset)),
+                [train_size, val_size, test_size],
+                generator=torch.Generator().manual_seed(42),
+            )
+
+        if self.mode == "test":
+            if has_explicit_paths:
+                test_path = self.config.get("test_path", self.config.get("val_path"))
+                self.test_dataset = AgeGenderDataset(
+                    test_path, transform=val_transform
+                )
+                print(f"Using explicit test_path={test_path}")
+            else:
+                self.test_dataset = AgeGenderDataset(
+                    self.config["ds_path"],
+                    transform=val_transform,
+                    use_dynamic_augmentation=False,
+                    indices=test_indices,
+                )
+                print(f"Splitting ds_path for test, using {len(self.test_dataset)} samples.")
         else:
             transform_list = []
             transform_configs = get_transforms_configs()
@@ -338,10 +374,7 @@ class AgeGenderDataModule(pl.LightningDataModule):
 
             train_transform = TrackingCompose(train_transforms, "train")
 
-            use_dynamic_augmentation = self.config.get("use_dynamic_augmentation", False)
-            num_aug_bins = self.config.get("num_aug_bins", False)
-
-            if self.config.get("train_path") and self.config.get("val_path"):
+            if has_explicit_paths:
                 self.train_dataset = AgeGenderDataset(
                     self.config.get("train_path"),
                     transform=train_transform,
@@ -356,24 +389,7 @@ class AgeGenderDataModule(pl.LightningDataModule):
                 print(f"Not splitting train/val samples, using:")
                 print(f"train_path={self.config.get('train_path')}")
                 print(f"val_path={self.config.get('val_path')}")
-
             else:
-                temp_dataset = AgeGenderDataset(
-                    self.config["ds_path"],
-                    transform=None,
-                    use_dynamic_augmentation=False,
-                )
-                print(f"Gender Distribution:\n{temp_dataset.gender_distribution()}")
-                print(f"Age Distribution:\n{temp_dataset.age_distribution()}")
-                train_size = int(0.8 * len(temp_dataset))
-                val_size = len(temp_dataset) - train_size
-
-                train_indices, val_indices = torch.utils.data.random_split(
-                    range(len(temp_dataset)),
-                    [train_size, val_size],
-                    generator=torch.Generator().manual_seed(42),
-                )
-
                 self.train_dataset = AgeGenderDataset(
                     self.config["ds_path"],
                     transform=train_transform,
@@ -389,8 +405,7 @@ class AgeGenderDataModule(pl.LightningDataModule):
                     indices=val_indices,
                 )
 
-                print(f"Splitting train/val samples, using:")
-                print(f"ds_path={self.config.get('ds_path')}")
+                print(f"Splitting train/val/test samples, using ds_path={self.config.get('ds_path')}")
 
             print(f"Train dataset size: {len(self.train_dataset)}")
             print(f"Validation dataset size: {len(self.val_dataset)}")
