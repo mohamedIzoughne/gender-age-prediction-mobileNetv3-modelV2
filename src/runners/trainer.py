@@ -154,7 +154,7 @@ def train(config: Dict[str, Any], sweep_run=False, serialize_final=False):
 
     model_type = config.get("model_type", "mobilenet_v3")
     is_aug = "aug" if config.get("use_dynamic_augmentation", False) else "no_aug"
-    run_name = f"{model_type}_{is_aug}"
+    run_name = config.get("prefix", f"{model_type}_{is_aug}")
 
     if os.path.exists("/content/"):
         if not os.path.exists("/content/drive/MyDrive/"):
