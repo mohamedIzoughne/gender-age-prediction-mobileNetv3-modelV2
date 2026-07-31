@@ -186,6 +186,9 @@ class AgeGenderClassifier(pl.LightningModule):
             x, age, gender, is_augmented, image_paths = batch
             return x, age, gender, image_paths
 
+    def on_test_epoch_start(self) -> None:
+        self.test_step_outputs = []
+
     def test_step(self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Any], batch_idx: int) -> Dict[str, torch.Tensor]:
         """Perform a test step."""
         x, age, gender, _ = batch
@@ -198,11 +201,11 @@ class AgeGenderClassifier(pl.LightningModule):
         age_mae = self.age_mae(age_pred, age.float())
         
         AGE_CLASSES = [
-            {"id": 0, "label": "dependent_minor", "min_age": 0, "max_age": 17},
-            {"id": 1, "label": "young_aspirational", "min_age": 18, "max_age": 28},
-            {"id": 2, "label": "independent_professional", "min_age": 29, "max_age": 38},
-            {"id": 3, "label": "early_nesting", "min_age": 39, "max_age": 48},
-            {"id": 4, "label": "peak_earning_adult", "min_age": 49, "max_age": 60},
+            {"id": 0, "label": "dependent_minor", "min_age": 0, "max_age": 15},
+            {"id": 1, "label": "young_aspirational", "min_age": 16, "max_age": 25},
+            {"id": 2, "label": "independent_professional", "min_age": 26, "max_age": 35},
+            {"id": 3, "label": "early_nesting", "min_age": 36, "max_age": 45},
+            {"id": 4, "label": "peak_earning_adult", "min_age": 46, "max_age": 60},
             {"id": 5, "label": "mature_provider", "min_age": 60, "max_age": 100},
             # {"id": 6, "label": "pre_retirement", "min_age": 56, "max_age": 65},
             # {"id": 7, "label": "senior_consumer", "min_age": 66, "max_age": 120},
@@ -226,7 +229,7 @@ class AgeGenderClassifier(pl.LightningModule):
         self.log("test_age_mae", age_mae, prog_bar=True)
         self.log("test_age_class_acc", age_class_acc, prog_bar=True)
 
-        return {
+        output = {
             "gender_pred": gender_pred,
             "age_pred": age_pred,
             "true_gender": gender,
@@ -234,6 +237,60 @@ class AgeGenderClassifier(pl.LightningModule):
             "pred_age_class": pred_age_classes,
             "true_age_class": true_age_classes,
         }
+        self.test_step_outputs.append(output)
+        return output
+
+    def on_test_epoch_end(self) -> None:
+        if not hasattr(self, 'test_step_outputs') or len(self.test_step_outputs) == 0:
+            return
+            
+        all_preds = torch.cat([x["pred_age_class"] for x in self.test_step_outputs]).cpu().numpy()
+        all_trues = torch.cat([x["true_age_class"] for x in self.test_step_outputs]).cpu().numpy()
+        
+        num_classes = 6
+        cm = np.zeros((num_classes, num_classes), dtype=int)
+        for t, p in zip(all_trues, all_preds):
+            if 0 <= t < num_classes and 0 <= p < num_classes:
+                cm[t, p] += 1
+                
+        AGE_CLASSES = [
+            "dependent_minor",
+            "young_aspirational",
+            "independent_professional",
+            "early_nesting",
+            "peak_earning_adult",
+            "mature_provider"
+        ]
+        
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        
+        plt.figure(figsize=(12, 10))
+        try:
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=AGE_CLASSES, yticklabels=AGE_CLASSES)
+        except ImportError:
+            # Fallback to matplotlib if seaborn is not available
+            plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+            plt.colorbar()
+            tick_marks = np.arange(len(AGE_CLASSES))
+            plt.xticks(tick_marks, AGE_CLASSES, rotation=45, ha='right')
+            plt.yticks(tick_marks, AGE_CLASSES)
+            for i in range(cm.shape[0]):
+                for j in range(cm.shape[1]):
+                    plt.text(j, i, format(cm[i, j], 'd'),
+                             horizontalalignment="center",
+                             color="white" if cm[i, j] > cm.max() / 2. else "black")
+                             
+        plt.xlabel('Predicted Age Category')
+        plt.ylabel('True Age Category')
+        plt.title('Age Category Confusion Matrix')
+        plt.tight_layout()
+        plot_path = 'age_category_confusion_matrix.png'
+        plt.savefig(plot_path)
+        plt.close()
+        
+        print(f"\nSaved Age Category Confusion Matrix to {plot_path}\n")
+        self.test_step_outputs.clear()
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Forward pass through the model."""
