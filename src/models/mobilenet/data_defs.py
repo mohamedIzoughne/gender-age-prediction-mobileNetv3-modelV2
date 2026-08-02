@@ -215,7 +215,7 @@ class AgeGenderDataset(Dataset):
         image = Image.open(img_path).convert("RGB")
         image = self.transform(image) # Base transform is always applied on CPU
 
-        source_image = self.image_files[orig_idx] if orig_idx is not None else self.image_files[idx]
+        source_image = os.path.basename(img_path)
         return image, age, gender, is_augmented, source_image
 
 
