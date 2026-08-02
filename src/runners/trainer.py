@@ -271,7 +271,7 @@ def load_model(path: str = "model_checkpoint.pth") -> AgeGenderClassifier:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train Age & Gender Classifier")
-    parser.add_argument("--config", type=str, default="config/model/my-configs/mobilenet_v3_large_aug.yaml", help="Path to config file")
+    parser.add_argument("--config", type=str, default="config/model/my-configs/sweep-34_improved_DYNAMIC_AUG_small.yaml", help="Path to config file (e.g., config/model/my-configs/sweep-34_improved_DYNAMIC_AUG_small.yaml, config/model/my-configs/swept-sweep-34_improved_DYNAMIC_AUG_v3_large.yaml, config/model/my-configs/mobilenet_v3_large_aug.yaml, config/model/my-configs/mobilenet_v3_large_no_aug.yaml, config/model/my-configs/efficientnet_b0_aug.yaml, config/model/my-configs/efficientnet_b0_no_aug.yaml)")
     args = parser.parse_args()
 
     config_path = os.path.join(project_root, args.config) if not os.path.isabs(args.config) else args.config

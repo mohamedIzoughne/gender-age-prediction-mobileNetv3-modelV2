@@ -74,7 +74,7 @@ def test(config, ckpt_path):
         raise ValueError("Invalid checkpoint format. Must be .ckpt or .pth")
         
     trainer = pl.Trainer(
-        accelerator="gpu",
+        accelerator="auto",
         devices=1,
     )
     
@@ -90,7 +90,7 @@ def test(config, ckpt_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test Age & Gender Classifier")
-    parser.add_argument("--config", type=str, default="config/model/my-configs/mobilenet_v3_large_aug.yaml", help="Path to config file")
+    parser.add_argument("--config", type=str, default="config/model/my-configs/sweep-34_improved_DYNAMIC_AUG_small.yaml", help="Path to config file (e.g., config/model/my-configs/sweep-34_improved_DYNAMIC_AUG_small.yaml, config/model/my-configs/swept-sweep-34_improved_DYNAMIC_AUG_v3_large.yaml, config/model/my-configs/mobilenet_v3_large_aug.yaml, config/model/my-configs/mobilenet_v3_large_no_aug.yaml, config/model/my-configs/efficientnet_b0_aug.yaml, config/model/my-configs/efficientnet_b0_no_aug.yaml)")
     parser.add_argument("--ckpt", type=str, required=True, help="Path to model checkpoint (.ckpt or .pth)")
     parser.add_argument("--ds_path", type=str, help="Override path to test dataset (e.g. /content/data/UTKFace)")
     args = parser.parse_args()

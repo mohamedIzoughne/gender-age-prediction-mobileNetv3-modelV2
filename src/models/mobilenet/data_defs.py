@@ -1,6 +1,8 @@
 import os
 import shutil
-from collections import Counter
+import json
+import math
+from collections import Counter, defaultdict
 from typing import List, Tuple, Dict, Any, Optional
 
 import pytorch_lightning as pl
@@ -139,21 +141,21 @@ class AgeGenderDataset(Dataset):
         """Return the list of image files."""
         return self.image_files
 
-    def calculate_age_bins(self, ages: List[int], num_bins: int = 9, include_augmented: bool = False) -> Tuple[
+    def calculate_age_bins(self, ages: List[int], num_bins: int = 19, include_augmented: bool = False) -> Tuple[
         List[List[int]], List[int]]:
         """Calculate age bins and their frequencies."""
         bins = [[] for _ in range(num_bins)]
         bin_frequencies = [0] * num_bins
 
         for idx, age in enumerate(ages):
-            bin_idx = min(age // 10, num_bins - 1)
+            bin_idx = min(age // 5, num_bins - 1)
             bins[bin_idx].append(idx)
             bin_frequencies[bin_idx] += 1
 
         if include_augmented and self.use_dynamic_augmentation:
             for orig_idx, _ in self.augmented_indices:
                 age = ages[orig_idx]
-                bin_idx = min(age // 10, num_bins - 1)
+                bin_idx = min(age // 5, num_bins - 1)
                 bin_frequencies[bin_idx] += 1
 
         return bins, bin_frequencies
@@ -180,7 +182,10 @@ class AgeGenderDataset(Dataset):
         bins, frequencies = self.get_bin_info()
         print(f"\n{stage} age distribution:")
         for i, count in enumerate(frequencies):
-            print(f"Bin {i * 10}-{(i + 1) * 10 - 1}: {count}")
+            if i == len(frequencies) - 1:
+                print(f"Bin {i * 5}+: {count}")
+            else:
+                print(f"Bin {i * 5}-{(i + 1) * 5 - 1}: {count}")
         print(f"Gender distribution: {self.gender_distribution()}")
         print(f"Age distribution: {self.age_distribution()}")
         print(f"Total samples: {len(self)}")
@@ -212,6 +217,75 @@ class AgeGenderDataset(Dataset):
 
         source_image = self.image_files[orig_idx] if orig_idx is not None else self.image_files[idx]
         return image, age, gender, is_augmented, source_image
+
+
+def stratified_split(
+    image_files: List[str],
+    ages: List[int],
+    val_ratio: float = 0.1,
+    test_ratio: float = 0.1,
+    seed: int = 42,
+) -> Tuple[List[int], List[int], List[int]]:
+    """Stratify split by exact age to ensure even distribution."""
+    age_to_indices = defaultdict(list)
+    for idx, age in enumerate(ages):
+        age_to_indices[age].append(idx)
+        
+    train_indices, val_indices, test_indices = [], [], []
+    rng = rnd.Random(seed)
+    
+    for age, indices in age_to_indices.items():
+        indices = sorted(indices)
+        rng.shuffle(indices)
+        
+        n_total = len(indices)
+        n_val = math.floor(n_total * val_ratio)
+        n_test = math.floor(n_total * test_ratio)
+        
+        if n_val == 0 and n_test == 0 and n_total > 0:
+            print(f"Age {age}: only {n_total} sample(s), assigning all to train.")
+            
+        val_indices.extend(indices[:n_val])
+        test_indices.extend(indices[n_val:n_val + n_test])
+        train_indices.extend(indices[n_val + n_test:])
+        
+    return train_indices, val_indices, test_indices
+
+def save_split_manifest(
+    image_files: List[str],
+    train_indices: List[int],
+    val_indices: List[int],
+    test_indices: List[int],
+    manifest_path: str,
+) -> None:
+    manifest = {}
+    for idx in train_indices: manifest[os.path.basename(image_files[idx])] = "train"
+    for idx in val_indices: manifest[os.path.basename(image_files[idx])] = "val"
+    for idx in test_indices: manifest[os.path.basename(image_files[idx])] = "test"
+        
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=2)
+    print(f"Saved split manifest to {manifest_path}")
+
+def load_split_manifest(
+    image_files: List[str],
+    manifest_path: str,
+) -> Tuple[List[int], List[int], List[int]]:
+    with open(manifest_path, "r") as f:
+        manifest = json.load(f)
+        
+    train_indices, val_indices, test_indices = [], [], []
+    for idx, img_path in enumerate(image_files):
+        basename = os.path.basename(img_path)
+        if basename not in manifest:
+            raise ValueError(f"Image {basename} not found in split manifest. Set force_resplit: true in config to regenerate.")
+            
+        split = manifest[basename]
+        if split == "train": train_indices.append(idx)
+        elif split == "val": val_indices.append(idx)
+        elif split == "test": test_indices.append(idx)
+            
+    return train_indices, val_indices, test_indices
 
 
 def get_transforms_configs() -> List[Tuple[str, Any]]:
@@ -324,15 +398,26 @@ class AgeGenderDataModule(pl.LightningDataModule):
             print(f"Gender Distribution:\n{temp_dataset.gender_distribution()}")
             print(f"Age Distribution:\n{temp_dataset.age_distribution()}")
             
-            train_size = int(0.8 * len(temp_dataset))
-            val_size = int(0.1 * len(temp_dataset))
-            test_size = len(temp_dataset) - train_size - val_size
+            manifest_path = os.path.join(self.config["ds_path"], "split_manifest.json")
+            force_resplit = self.config.get("force_resplit", False)
 
-            train_indices, val_indices, test_indices = torch.utils.data.random_split(
-                range(len(temp_dataset)),
-                [train_size, val_size, test_size],
-                generator=torch.Generator().manual_seed(42),
-            )
+            if not force_resplit and os.path.exists(manifest_path):
+                print(f"Loading existing split manifest from {manifest_path}")
+                train_indices, val_indices, test_indices = load_split_manifest(
+                    temp_dataset.valid_images, manifest_path
+                )
+            else:
+                print("Computing new stratified split by exact age...")
+                train_indices, val_indices, test_indices = stratified_split(
+                    temp_dataset.valid_images,
+                    temp_dataset.ages,
+                    val_ratio=self.config.get("val_ratio", 0.1),
+                    test_ratio=self.config.get("test_ratio", 0.1),
+                    seed=self.config.get("split_seed", 42),
+                )
+                save_split_manifest(
+                    temp_dataset.valid_images, train_indices, val_indices, test_indices, manifest_path
+                )
 
         if self.mode == "test":
             if has_explicit_paths:
