@@ -36,7 +36,7 @@ class FaceAlignTransform:
             eye_center = ((left_eye[0] + right_eye[0]) / 2, (left_eye[1] + right_eye[1]) / 2)
             
             aligned_img = img.rotate(angle, center=eye_center, resample=Image.BILINEAR)
-            boxes2, probs2, _ = self.mtcnn.detect(aligned_img)
+            boxes2, probs2 = self.mtcnn.detect(aligned_img)
             if boxes2 is not None:
                 box = boxes2[0]
                 aligned_img = aligned_img.crop((box[0], box[1], box[2], box[3]))
