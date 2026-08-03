@@ -5,7 +5,6 @@ import math
 from PIL import Image
 import torch
 import pytorch_lightning as pl
-from facenet_pytorch import MTCNN
 
 # Add the project root to sys.path to resolve 'src' module imports
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -16,40 +15,6 @@ from src.models.mobilenet.data_loader import create_dataloaders
 from src.runners.trainer import load_config
 from src.models.mobilenet.classifier import AgeGenderClassifier
 from src.models.mobilenet.data_defs import AgeGenderDataModule
-
-class FaceAlignTransform:
-    def __init__(self, base_transform):
-        self.base_transform = base_transform
-        self.mtcnn = None
-
-    def __call__(self, img):
-        if self.mtcnn is None:
-            self.mtcnn = MTCNN(image_size=224, margin=20, keep_all=False, post_process=False, device='cpu')
-
-        boxes, probs, landmarks = self.mtcnn.detect(img, landmarks=True)
-        if boxes is not None and landmarks is not None:
-            left_eye = landmarks[0][0]
-            right_eye = landmarks[0][1]
-            dy = right_eye[1] - left_eye[1]
-            dx = right_eye[0] - left_eye[0]
-            angle = math.degrees(math.atan2(dy, dx))
-            eye_center = ((left_eye[0] + right_eye[0]) / 2, (left_eye[1] + right_eye[1]) / 2)
-            
-            aligned_img = img.rotate(angle, center=eye_center, resample=Image.BILINEAR)
-            boxes2, probs2 = self.mtcnn.detect(aligned_img)
-            if boxes2 is not None:
-                box = boxes2[0]
-                aligned_img = aligned_img.crop((box[0], box[1], box[2], box[3]))
-                img = aligned_img
-                
-        return self.base_transform(img)
-
-class AlignedTestDataModule(AgeGenderDataModule):
-    def setup(self, stage=None):
-        super().setup(stage)
-        if self.mode == "test":
-            original_transform = self.test_dataset.transform
-            self.test_dataset.transform = FaceAlignTransform(original_transform)
 
 def load_pth_model(path: str, config: dict) -> AgeGenderClassifier:
     checkpoint = torch.load(path)
@@ -63,7 +28,7 @@ def test(config, ckpt_path):
     print(f"\n - - - \nTesting with Config:\n{dict(config)}\n\n - - - \n")
     pl.seed_everything(42, workers=True)
 
-    data = AlignedTestDataModule(config, mode="test")
+    data = AgeGenderDataModule(config, mode="test")
     
     print(f"Loading model from {ckpt_path}")
     if ckpt_path.endswith('.ckpt'):
