@@ -254,12 +254,12 @@ class AgeGenderClassifier(pl.LightningModule):
                 cm[t, p] += 1
                 
         AGE_CLASSES = [
-            "dependent_minor",
-            "young_aspirational",
-            "independent_professional",
-            "early_nesting",
-            "peak_earning_adult",
-            "mature_provider"
+            "dependent_minor (0-15)",
+            "young_aspirational (16-25)",
+            "independent_professional (26-35)",
+            "early_nesting (36-45)",
+            "peak_earning_adult (46-60)",
+            "mature_provider (60-100)"
         ]
         
         import matplotlib.pyplot as plt
