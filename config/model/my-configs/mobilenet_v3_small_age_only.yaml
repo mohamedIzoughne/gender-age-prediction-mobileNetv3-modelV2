@@ -1,0 +1,49 @@
+# mobilenet_v3_small_age_only
+
+use_dynamic_augmentation: True
+dynamic_augmentation_mult: 0.3
+num_aug_bins: 9
+
+model_type: "mobilenet_v3_small"
+
+# Provide explicit paths for train, validation, and test datasets
+train_path: "/content/data/UTKFace/imdb-utk/train"
+val_path: "/content/data/UTKFace/imdb-utk/val"
+test_path: "/content/data/UTKFace/imdb-utk/test"
+
+num_epochs: 24
+batch_size: 256
+freeze_epochs: 0
+
+# Optimizer params
+base_lr: 0.0002
+weight_decay: 0.00035
+
+# Regularization params
+dropout: 0.25
+l1_lambda: 0.0001
+
+# Scheduler specific params
+lr_scheduler: "one_cycle"
+max_lr: 0.0048
+anneal_strategy: "cos"
+pct_start: 0.22
+div_factor: 25
+final_div_factor: 10000
+
+override_cycle_epoch_count: 24
+
+# Transform params
+# Augmentations tuned for store-entrance camera mounted slightly high (top-down angle).
+# YOLO mostly selects clear, frontal crops — but may occasionally pass a slightly blurry
+# (person moving fast) or slightly tilted frame. We keep a minimal safety net for that.
+include_center_crop: false          # YOLO already crops the face tightly
+include_color_jitter: true          # Entrance lighting varies (time of day, artificial light)
+include_gaussian_blur: true         # Safety net: YOLO may occasionally pick a slightly motion-blurred frame
+include_gaussian_noise: false       # Noise is unlikely even with YOLO imperfections
+include_random_affine: false        # Too aggressive; camera angle is fixed
+include_random_erasing: false       # Heavy occlusion unlikely even with YOLO mistakes
+include_random_grayscale: true      # Prevents skin-color bias
+include_random_horizontal_flip: true  # Faces are symmetric; valid augmentation
+include_random_perspective: true    # Camera is elevated — top-down angle creates real perspective distortion on faces
+include_random_rotation: true       # Safety net: slight head tilts or off-angle YOLO crops
