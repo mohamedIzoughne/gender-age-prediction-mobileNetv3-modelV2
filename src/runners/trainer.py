@@ -62,7 +62,6 @@ class MetricsCSVCallback(Callback):
         if not file_exists or os.path.getsize(self.filepath) == 0:
             self.writer.writerow(['epoch', 'stage', 'train_loss', 'val_loss', 'train_age_mae', 'val_age_mae', 'train_gender_acc', 'val_gender_acc', 'lr', 'timestamp'])
         self.file.flush()
-        import os
         os.fsync(self.file.fileno())
             
     def on_train_epoch_end(self, trainer, pl_module):
