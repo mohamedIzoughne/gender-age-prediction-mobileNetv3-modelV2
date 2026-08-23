@@ -5,6 +5,7 @@ dynamic_augmentation_mult: 0.3
 num_aug_bins: 9
 
 model_type: "mobilenet_v3_small"
+gender_loss_weight: 0.0
 
 # Provide explicit paths for train, validation, and test datasets
 train_path: "/content/data/imdb-utk/train/train_cropped_faces"
