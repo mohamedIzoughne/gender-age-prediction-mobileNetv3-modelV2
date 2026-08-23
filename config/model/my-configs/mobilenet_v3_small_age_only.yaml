@@ -7,9 +7,9 @@ num_aug_bins: 9
 model_type: "mobilenet_v3_small"
 
 # Provide explicit paths for train, validation, and test datasets
-train_path: "/content/data/UTKFace/imdb-utk/train"
-val_path: "/content/data/UTKFace/imdb-utk/val"
-test_path: "/content/data/UTKFace/imdb-utk/test"
+train_path: "/content/data/imdb-utk/train/train_cropped_faces"
+val_path: "/content/data/imdb-utk/val/val_cropped_faces"
+test_path: "/content/data/imdb-utk/test/test_cropped_faces"
 
 num_epochs: 24
 batch_size: 256
