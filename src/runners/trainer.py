@@ -20,6 +20,7 @@ from typing import Dict, Any
 import yaml
 import csv
 from datetime import datetime
+import os
 
 class MetricsCSVCallback(Callback):
     def __init__(self, filepath):
